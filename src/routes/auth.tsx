@@ -72,9 +72,9 @@ function AuthPage() {
           <Button type="submit" className="w-full rounded-full" disabled={busy}>{mode === "login" ? "Entrar" : "Criar conta"}</Button>
         </form>
         <Button variant="outline" className="mt-3 w-full rounded-full" onClick={google}>Continuar com Google</Button>
-        <button className="mt-6 w-full text-center text-sm text-primary hover:underline" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+        <Button type="button" variant="link" className="mt-6 w-full text-primary" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
           {mode === "login" ? "Não tem conta? Criar conta" : "Já tem conta? Entrar"}
-        </button>
+        </Button>
       </main>
     </div>
   );

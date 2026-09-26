@@ -14,3 +14,7 @@
 - [x] Interpretar descrição e exclusões com IA no servidor
 - [x] Reutilizar o perfil estruturado em refinamentos e personalizar explicações
 - [x] Validar chamada real, fallback e fluxo público sem regressões
+- [x] Separar URL do produto e URL de afiliado preservando os links atuais
+- [x] Registrar cliques e eventos básicos sem dados pessoais
+- [x] Exibir métricas de cliques no Dashboard e na lista administrativa
+- [x] Validar prioridade de links, métricas e ausência de regressões

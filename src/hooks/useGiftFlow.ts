@@ -31,7 +31,7 @@ export function useGiftFlow() {
       seen.current = [...seen.current, ...recs.map((r) => r.product.id)];
       setResults(recs);
       setPhase("results");
-      track(isRefinement ? "refinement_completed" : "recommendation_generated", { refinement: p.refinement, ids: recs.map((r) => r.product.id) });
+      track(isRefinement ? "recommendation_refined" : "recommendation_generated", { refinement: p.refinement, ids: recs.map((r) => r.product.id) });
     } catch {
       await minWait;
       setError("load");

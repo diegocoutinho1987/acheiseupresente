@@ -46,6 +46,45 @@ export type Database = {
           },
         ]
       }
+      product_clicks: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          session_id: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          session_id?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          session_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_clicks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_clicks_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
@@ -58,6 +97,7 @@ export type Database = {
           name: string
           occasions: string[]
           price: number
+          product_url: string
           profiles: string[]
           store: string
           tags: string[]
@@ -65,7 +105,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          affiliate_url: string
+          affiliate_url?: string
           category: string
           created_at?: string
           description?: string
@@ -74,6 +114,7 @@ export type Database = {
           name: string
           occasions?: string[]
           price: number
+          product_url?: string
           profiles?: string[]
           store: string
           tags?: string[]
@@ -90,6 +131,7 @@ export type Database = {
           name?: string
           occasions?: string[]
           price?: number
+          product_url?: string
           profiles?: string[]
           store?: string
           tags?: string[]

@@ -6,6 +6,8 @@ export interface Product {
   store: string;
   image: string;
   url: string;
+  productUrl?: string;
+  affiliateUrl?: string;
   category: string;
   tags: string[];
   occasions: string[];

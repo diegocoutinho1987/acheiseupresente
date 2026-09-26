@@ -27,6 +27,10 @@ const raw: Omit<Product, "url">[] = [
   { id: "p20", name: "Chaveiro gravado com iniciais", description: "Couro legítimo com gravação a laser.", price: 39.9, store: "Demo Presentes", image: U("1582142306909-195724d33ffc"), category: "personalizado", tags: ["pessoal", "prático", "lembrança"] },
   { id: "p21", name: "Kit de chás artesanais", description: "Seis blends naturais em latas decorativas.", price: 69.9, store: "Demo Bem-estar", image: U("1564890369478-c89ca6d9cde9"), category: "bem-estar", tags: ["chá", "relaxar", "bem-estar", "autocuidado", "caseiro"] },
   { id: "p22", name: "Experiência: aula de cerâmica", description: "Voucher para uma oficina de 3 horas com materiais inclusos.", price: 260, store: "Demo Experiências", image: U("1565193566173-7a0ee3dbe261"), category: "experiência", tags: ["arte", "criativo", "experiência", "hobby", "casal"] },
+  { id: "p23", name: "Marcador de páginas em metal", description: "Design vazado com pingente, acompanha envelope para presente.", price: 29.9, store: "Demo Casa & Livros", image: U("1512820790803-83ca734da794"), category: "leitura", tags: ["leitura", "livros", "lembrança", "pessoal"] },
+  { id: "p24", name: "Caneca de cerâmica esmaltada", description: "Feita à mão, 300ml, cada peça com acabamento único.", price: 49.9, store: "Demo Café", image: U("1514228742587-6b1558fcca3d"), category: "café", tags: ["café", "chá", "caseiro", "criativo"] },
+  { id: "p25", name: "Mini vaso com suculenta", description: "Vaso de cimento com suculenta que pede pouca água.", price: 34.9, store: "Demo Home", image: U("1416879595882-3373a0480b5b"), category: "casa", tags: ["plantas", "natureza", "casa", "trabalho", "lembrança"] },
+  { id: "p26", name: "Baralho de perguntas para conversas", description: "100 cartas para boas conversas entre amigos, família ou casal.", price: 44.9, store: "Demo Jogos", image: U("1610890716171-6b1bb98ffd09"), category: "jogos", tags: ["jogos", "amigos", "casal", "família", "criativo", "diversão"] },
 ];
 
 export const PRODUCTS: Product[] = raw.map((p) => ({ ...p, url: demoUrl(p.id) }));

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, Wallet, Store, Sparkle } from "lucide-react";
 import { SiteHeader } from "@/components/gift/SiteHeader";
+import { ProductImageFrame } from "@/components/gift/ProductImageFrame";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types";
 import { getCatalog } from "@/services/catalogService";
@@ -94,7 +95,7 @@ function Home() {
           <div className="mt-10 grid gap-5 sm:grid-cols-3" aria-busy={catalog.length === 0}>
             {examples.map(({ product, who, reason }) => (
               <div key={product.id} className="overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-soft)]">
-                <img src={product.image} alt={product.name} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                <ProductImageFrame src={product.image} alt={product.name} className="aspect-[4/3] w-full p-3" />
                 <div className="p-5">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Para: {who}</p>
                   <p className="mt-1 font-semibold text-foreground">{product.name}</p>

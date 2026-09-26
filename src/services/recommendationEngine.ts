@@ -176,7 +176,7 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
 
   if (profile.refinement === "Mais barato" || profile.feedback.includes("Muito caro")) {
     const upper = Number.isFinite(profile.budgetMax) ? profile.budgetMax : Math.max(profile.budgetMin * 2, product.price);
-    score += Math.max(0, 160 * (1 - product.price / Math.max(upper, 1)));
+    score += Math.max(0, 300 * (1 - product.price / Math.max(upper, 1)));
     reasons.push("Prioriza um valor menor dentro das opções compatíveis.");
   }
 

@@ -14,7 +14,7 @@ const explanationsInput = z.object({
 });
 
 export const interpretGiftProfile = createServerFn({ method: "POST" })
-  .inputValidator((data) => interpretInput.parse(data))
+  .validator((data) => interpretInput.parse(data))
   .handler(async ({ data }) => {
     const apiKey = process.env['LOVABLE_API_KEY']!;
     if (!apiKey) throw new Error("A interpretação inteligente não está configurada.");
@@ -23,7 +23,7 @@ export const interpretGiftProfile = createServerFn({ method: "POST" })
   });
 
 export const personalizeRecommendationExplanations = createServerFn({ method: "POST" })
-  .inputValidator((data) => explanationsInput.parse(data))
+  .validator((data) => explanationsInput.parse(data))
   .handler(async ({ data }) => {
     const apiKey = process.env['LOVABLE_API_KEY']!;
     if (!apiKey) throw new Error("As explicações inteligentes não estão configuradas.");

@@ -25,7 +25,7 @@ export function ProductCard({ rec, index, onClick }: { rec: Recommendation; inde
         <p className="mt-2 text-sm text-muted-foreground">{product.description}</p>
         <div className="mt-4 rounded-xl bg-secondary p-3.5">
           <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary"><Sparkles className="h-3.5 w-3.5" /> Por que escolhemos</p>
-          <p className="mt-1.5 text-sm leading-relaxed text-secondary-foreground">{rec.reason}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-secondary-foreground">{rec.explanation}</p>
         </div>
         <div className="mt-auto pt-5">
           <Button asChild className="w-full rounded-full" onClick={onClick}>

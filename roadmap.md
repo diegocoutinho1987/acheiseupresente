@@ -8,3 +8,6 @@
 - [x] Validar o painel e o fluxo público no navegador
 - [x] Remover o catálogo local como fonte alternativa
 - [x] Validar persistência entre Admin e recomendações públicas
+- [ ] Implementar pontuação determinística com filtros e explicações rastreáveis
+- [ ] Integrar refinamentos, feedback e histórico da sessão ao ranking
+- [ ] Validar os cenários do motor e o fluxo público em computador e celular

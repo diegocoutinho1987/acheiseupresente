@@ -14,6 +14,8 @@ export async function getCatalog(): Promise<Product[]> {
     url: p.affiliate_url,
     image: p.image_url ?? "",
     tags: p.tags ?? [],
+    occasions: p.occasions ?? [],
+    profiles: p.profiles ?? [],
   }));
 }
 

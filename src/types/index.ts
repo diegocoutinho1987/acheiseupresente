@@ -8,13 +8,16 @@ export interface Product {
   url: string;
   category: string;
   tags: string[];
+  occasions: string[];
+  profiles: string[];
 }
 
 export interface Recommendation {
   product: Product;
-  reason: string;
+  reasons: string[];
+  explanation: string;
   /** Uso interno para ranking — nunca exibir ao usuário. */
-  matchScore?: number;
+  score: number;
 }
 
 export type Refinement =

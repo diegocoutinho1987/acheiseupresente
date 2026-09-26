@@ -18,9 +18,9 @@ import { track, type AnalyticsEvent } from "@/services/analytics";
 export const Route = createFileRoute("/encontrar")({
   head: () => ({
     meta: [
-      { title: "Encontrar presente — Presenteia" },
+      { title: "Encontrar presente — Achei Seu Presente!" },
       { name: "description", content: "Responda 5 perguntas rápidas e receba 5 ideias de presente com a explicação de cada escolha." },
-      { property: "og:title", content: "Encontrar presente — Presenteia" },
+      { property: "og:title", content: "Encontrar presente — Achei Seu Presente!" },
       { property: "og:description", content: "Responda 5 perguntas rápidas e receba 5 ideias de presente com a explicação de cada escolha." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

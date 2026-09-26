@@ -10,9 +10,9 @@ import { track } from "@/services/analytics";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Presenteia — descubra o presente certo para cada pessoa" },
+      { title: "Achei Seu Presente! — descubra o presente certo para cada pessoa" },
       { name: "description", content: "Conte um pouco sobre a pessoa e descubra presentes que combinam com ela. 5 ideias personalizadas, dentro do seu orçamento." },
-      { property: "og:title", content: "Presenteia — descubra o presente certo para cada pessoa" },
+      { property: "og:title", content: "Achei Seu Presente! — descubra o presente certo para cada pessoa" },
       { property: "og:description", content: "Conte um pouco sobre a pessoa e descubra presentes que combinam com ela." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -103,7 +103,7 @@ function Home() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-8 text-center text-xs text-muted-foreground">Presenteia · versão de demonstração com produtos fictícios</footer>
+      <footer className="border-t py-8 text-center text-xs text-muted-foreground">Achei Seu Presente! · versão de demonstração com produtos fictícios</footer>
     </div>
   );
 }

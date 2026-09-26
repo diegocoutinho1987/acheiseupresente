@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Presenteia — ideias de presente personalizadas" },
+      { title: "Achei Seu Presente! — ideias de presente personalizadas" },
       { name: "description", content: "Conte sobre a pessoa e descubra presentes que combinam com ela." },
     ],
     links: [

@@ -40,7 +40,7 @@ function AdminPage() {
 
   async function load() {
     const { data, error } = await supabase.from("products").select("*").order("name");
-    if (error) return toast.error("Erro ao carregar produtos.");
+    if (error) { toast.error("Erro ao carregar produtos."); return; }
     setRows(data as Row[]);
   }
 
@@ -57,14 +57,14 @@ function AdminPage() {
     e.preventDefault();
     if (!form) return;
     const price = Number(form.price.replace(",", "."));
-    if (!form.name.trim() || !(price > 0) || !/^https?:\/\//.test(form.affiliate_url)) return toast.error("Preencha nome, preço válido e um link começando com https://");
+    if (!form.name.trim() || !(price > 0) || !/^https?:\/\//.test(form.affiliate_url)) { toast.error("Preencha nome, preço válido e um link começando com https://"); return; }
     const payload = {
       name: form.name.trim(), description: form.description.trim(), price, category: form.category.trim() || "outros",
       store: form.store.trim(), affiliate_url: form.affiliate_url.trim(), image_url: form.image_url.trim() || null, active: form.active,
       tags: form.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
     };
     const { error } = form.id ? await supabase.from("products").update(payload).eq("id", form.id) : await supabase.from("products").insert(payload);
-    if (error) return toast.error("Não foi possível salvar.");
+    if (error) { toast.error("Não foi possível salvar."); return; }
     toast.success("Produto salvo.");
     setForm(null);
     load();
@@ -73,7 +73,7 @@ function AdminPage() {
   async function remove(r: Row) {
     if (!confirm(`Excluir "${r.name}"?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", r.id);
-    if (error) return toast.error("Não foi possível excluir.");
+    if (error) { toast.error("Não foi possível excluir."); return; }
     load();
   }
 

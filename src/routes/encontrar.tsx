@@ -107,7 +107,7 @@ function FinderPage() {
         {phase === "error" && (
           <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><SearchX className="h-6 w-6 text-muted-foreground" /></span>
-            <h1 className="mt-6 text-2xl text-foreground">{flow.error === "load" ? "Não foi possível carregar os produtos." : "Não encontramos produtos disponíveis no momento."}</h1>
+            <h1 className="mt-6 text-2xl text-foreground">{flow.error === "load" ? "Não foi possível carregar os produtos." : "Não encontramos boas opções para esse perfil."}</h1>
             <p className="mt-2 max-w-sm text-muted-foreground">{flow.error === "load" ? "Tente novamente em alguns instantes." : "Tente alterar alguma informação sobre a pessoa, o orçamento ou suas preferências."}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>
@@ -119,7 +119,7 @@ function FinderPage() {
         {phase === "results" && (
           <div className="fade-up">
             <div className="mx-auto mb-10 mt-4 max-w-2xl text-center">
-              <h1 className="text-3xl sm:text-4xl text-foreground">Encontramos algumas ideias para você.</h1>
+              <h1 className="text-3xl sm:text-4xl text-foreground">{flow.results.length === 1 ? "Encontramos 1 opção que combina com seu perfil." : `Encontramos ${flow.results.length} opções que combinam com seu perfil.`}</h1>
               <p className="mt-3 text-muted-foreground">Selecionamos opções pensando no perfil que você descreveu.</p>
               <p className="mt-4 text-sm text-muted-foreground">
                 {profile.recipient} · {profile.occasion} · {profile.budget}

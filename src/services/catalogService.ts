@@ -16,6 +16,7 @@ export async function getCatalog(): Promise<Product[]> {
     tags: p.tags ?? [],
     occasions: p.occasions ?? [],
     profiles: p.profiles ?? [],
+    active: p.active,
   }));
 }
 

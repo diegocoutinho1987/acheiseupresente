@@ -216,6 +216,7 @@ export function rankProducts(products: Product[], giftProfile: GiftProfile, prev
   const previous = new Set(previousIds);
   const previousProducts = products.filter((product) => previous.has(product.id));
   const scored = products
+    .filter((product) => product.active)
     .map((product) => calculateProductScore(product, profile, previousProducts))
     .filter((item): item is ScoredProduct => item !== null);
 

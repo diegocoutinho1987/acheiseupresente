@@ -10,6 +10,7 @@ export interface Product {
   tags: string[];
   occasions: string[];
   profiles: string[];
+  active: boolean;
 }
 
 export interface Recommendation {

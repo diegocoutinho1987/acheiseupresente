@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { Button } from "@/components/ui/button";
 import { getProduct, updateProduct, type AdminProduct, type ProductPayload } from "@/services/productService";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
@@ -20,4 +21,4 @@ function EditProductPage() {
   if (product === null) return <div><h1 className="text-2xl font-semibold">Produto não encontrado</h1><ButtonBack onClick={() => navigate({ to: "/admin/products" })} /></div>;
   return <div className="mx-auto max-w-4xl"><div className="mb-8"><p className="text-sm font-medium text-primary">Catálogo</p><h1 className="mt-1 text-3xl font-semibold">Editar produto</h1><p className="mt-2 text-muted-foreground">Atualize os dados de {product.name}.</p></div><ProductForm product={product} submitting={submitting} onSubmit={save} onCancel={() => navigate({ to: "/admin/products" })} /></div>;
 }
-function ButtonBack({ onClick }: { onClick: () => void }) { return <button className="mt-4 text-sm text-primary underline" onClick={onClick}>Voltar para produtos</button>; }
+function ButtonBack({ onClick }: { onClick: () => void }) { return <Button className="mt-4" variant="link" onClick={onClick}>Voltar para produtos</Button>; }

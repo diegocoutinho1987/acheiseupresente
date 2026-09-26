@@ -29,7 +29,7 @@ export function AdminShell() {
         </Button>
       </header>
 
-      {open && <button className="fixed inset-0 z-30 bg-foreground/20 md:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu" />}
+      {open && <Button variant="ghost" className="fixed inset-0 z-30 h-auto w-auto rounded-none bg-foreground/20 p-0 hover:bg-foreground/20 md:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu" />}
 
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-sidebar transition-transform md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-20 items-center border-b px-6">

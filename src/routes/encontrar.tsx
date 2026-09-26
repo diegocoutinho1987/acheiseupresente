@@ -107,8 +107,8 @@ function FinderPage() {
         {phase === "error" && (
           <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><SearchX className="h-6 w-6 text-muted-foreground" /></span>
-            <h1 className="mt-6 text-2xl text-foreground">Não conseguimos encontrar boas opções dessa vez.</h1>
-            <p className="mt-2 max-w-sm text-muted-foreground">Tente alterar alguma informação sobre a pessoa, o orçamento ou suas preferências.</p>
+            <h1 className="mt-6 text-2xl text-foreground">{flow.error === "load" ? "Não foi possível carregar os produtos." : "Não encontramos produtos disponíveis no momento."}</h1>
+            <p className="mt-2 max-w-sm text-muted-foreground">{flow.error === "load" ? "Tente novamente em alguns instantes." : "Tente alterar alguma informação sobre a pessoa, o orçamento ou suas preferências."}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>
               <Button variant="outline" className="rounded-full" onClick={flow.editAnswers}><Pencil className="h-4 w-4" /> Editar respostas</Button>

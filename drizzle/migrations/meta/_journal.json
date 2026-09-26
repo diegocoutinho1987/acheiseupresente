@@ -8,6 +8,13 @@
       "when": 1790390973207,
       "tag": "0000_create_gift_platform",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790391710266,
+      "tag": "0001_admin_roles_products",
+      "breakpoints": true
     }
   ]
 }

@@ -115,7 +115,8 @@ function buildReason(p: Product, profile: GiftProfile, matched: string[], inBudg
   return [...parts, ...extras].join(" ");
 }
 
-export async function getRecommendations(profile: GiftProfile, previousIds: string[] = []): Promise<Recommendation[]> {
+export async function getRecommendations(input: GiftProfile, previousIds: string[] = []): Promise<Recommendation[]> {
+  const profile = { ...input, avoid: input.avoid === "__none__" ? "" : input.avoid };
   await new Promise((r) => setTimeout(r, 400)); // simula latência de rede
   const budget = BUDGETS.find((b) => b.label === profile.budget) ?? BUDGETS[2];
   let { min, max } = budget;

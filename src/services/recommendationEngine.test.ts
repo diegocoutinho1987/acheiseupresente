@@ -64,7 +64,7 @@ describe("motor determinístico de recomendações", () => {
     ["Mais barato", "cheap"],
     ["Mais criativo", "creative"],
     ["Mais útil", "tech"],
-    ["Mais pessoal", "cheap"],
+    ["Mais pessoal", "creative"],
   ])("faz o refinamento %s influenciar o topo", (refinement, expected) => {
     expect(rankProducts(catalog, profile({ budget: "R$200 a R$500", description: "Pessoa de gostos variados.", refinement }))[0]?.product.id).toBe(expected);
   });

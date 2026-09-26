@@ -176,7 +176,7 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
 
   if (profile.refinement === "Mais barato" || profile.feedback.includes("Muito caro")) {
     const upper = Number.isFinite(profile.budgetMax) ? profile.budgetMax : Math.max(profile.budgetMin * 2, product.price);
-    score += Math.max(0, 80 * (1 - product.price / Math.max(upper, 1)));
+    score += Math.max(0, 100 * (1 - product.price / Math.max(upper, 1)));
     reasons.push("Prioriza um valor menor dentro das opções compatíveis.");
   }
 
@@ -222,7 +222,7 @@ export function rankProducts(products: Product[], giftProfile: GiftProfile, prev
 
   const unseen = scored.filter((item) => !previous.has(item.product.id));
   const candidates = profile.refinement === "Quero outras opções" && unseen.length > 0
-    ? [...unseen, ...scored.filter((item) => previous.has(item.product.id)).map((item) => ({ ...item, score: item.score - 50 }))]
+    ? unseen
     : scored.map((item) => ({ ...item, score: item.score - (previous.has(item.product.id) ? 3 : 0) }));
   const strongerDiversity = profile.feedback.includes("Muito comum") || profile.feedback.includes("Quero algo diferente");
 

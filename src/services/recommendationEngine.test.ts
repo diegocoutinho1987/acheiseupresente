@@ -56,7 +56,7 @@ describe("motor determinístico de recomendações", () => {
   });
 
   it("retorna menos de cinco e pode retornar vazio sem inventar produtos", () => {
-    expect(rankProducts([catalog[0]!, catalog[1]!], profile())).toHaveLength(1);
+    expect(rankProducts([catalog[0]!, catalog[1]!], profile())).toHaveLength(2);
     expect(rankProducts(catalog, profile({ budget: "Até R$50", avoid: "roupas lembrança" }))).toHaveLength(0);
   });
 

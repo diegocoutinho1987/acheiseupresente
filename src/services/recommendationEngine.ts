@@ -170,13 +170,13 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
   const refinementTags = REFINEMENT_TAGS[profile.refinement] ?? [];
   const refinementMatches = refinementTags.filter((tag) => normalizedTags.some((productTag) => sameConcept(tag, productTag)));
   if (refinementMatches.length) {
-    score += refinementMatches.length * 12;
+    score += refinementMatches.length * 60;
     reasons.push(`Atende ao pedido por uma opção ${profile.refinement.toLowerCase().replace("mais ", "mais ")}.`);
   }
 
   if (profile.refinement === "Mais barato" || profile.feedback.includes("Muito caro")) {
     const upper = Number.isFinite(profile.budgetMax) ? profile.budgetMax : Math.max(profile.budgetMin * 2, product.price);
-    score += Math.max(0, 20 * (1 - product.price / Math.max(upper, 1)));
+    score += Math.max(0, 80 * (1 - product.price / Math.max(upper, 1)));
     reasons.push("Prioriza um valor menor dentro das opções compatíveis.");
   }
 
@@ -208,7 +208,7 @@ function diversify(items: ScoredProduct[], stronger: boolean): ScoredProduct[] {
 }
 
 function explanation(reasons: string[]): string {
-  return reasons.slice(0, 3).join(" ");
+  return reasons.join(" ");
 }
 
 export function rankProducts(products: Product[], giftProfile: GiftProfile, previousIds: string[] = []): Recommendation[] {

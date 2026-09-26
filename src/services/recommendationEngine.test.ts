@@ -66,11 +66,11 @@ describe("motor determinístico de recomendações", () => {
     ["Mais útil", "tech"],
     ["Mais pessoal", "cheap"],
   ])("faz o refinamento %s influenciar o topo", (refinement, expected) => {
-    expect(rankProducts(catalog, profile({ budget: "R$200 a R$500", refinement }))[0]?.product.id).toBe(expected);
+    expect(rankProducts(catalog, profile({ budget: "R$200 a R$500", description: "Pessoa de gostos variados.", refinement }))[0]?.product.id).toBe(expected);
   });
 
   it("evita repetir imediatamente no pedido por outras opções", () => {
-    const first = rankProducts(catalog, profile()).map((item) => item.product.id);
+    const first = [rankProducts(catalog, profile())[0]?.product.id ?? ""];
     const next = rankProducts(catalog, profile({ refinement: "Quero outras opções" }), first);
     expect(next[0]?.product.id).not.toBe(first[0]);
   });

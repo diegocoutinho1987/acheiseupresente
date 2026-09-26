@@ -3,8 +3,6 @@ import type { GiftProfile, Product, Refinement } from "@/types";
 import { matchesAvoidTerms, rankProducts } from "./recommendationEngine";
 
 const product = (overrides: Partial<Product> & Pick<Product, "id" | "name">): Product => ({
-  id: overrides.id,
-  name: overrides.name,
   description: "Produto para presente",
   price: 150,
   store: "Loja Teste",
@@ -60,12 +58,12 @@ describe("motor determinístico de recomendações", () => {
     expect(rankProducts(catalog, profile({ budget: "Até R$50", avoid: "roupas lembrança" }))).toHaveLength(0);
   });
 
-  it.each<[Refinement, string]>([
+  it.each([
     ["Mais barato", "cheap"],
     ["Mais criativo", "creative"],
     ["Mais útil", "tech"],
     ["Mais pessoal", "creative"],
-  ])("faz o refinamento %s influenciar o topo", (refinement, expected) => {
+  ] as const)("faz o refinamento %s influenciar o topo", (refinement: Refinement, expected: string) => {
     expect(rankProducts(catalog, profile({ budget: "R$200 a R$500", description: "Pessoa de gostos variados.", refinement }))[0]?.product.id).toBe(expected);
   });
 

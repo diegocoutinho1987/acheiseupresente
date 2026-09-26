@@ -7,10 +7,11 @@ export async function getSessionId(): Promise<string | null> {
   const existing = window.localStorage.getItem(KEY);
   if (existing) return existing;
 
-  const { data, error } = await supabase.from("sessions").insert({}).select("id").single();
-  if (error || !data) return null;
-  window.localStorage.setItem(KEY, data.id);
-  return data.id;
+  const id = crypto.randomUUID();
+  const { error } = await supabase.from("sessions").insert({ id });
+  if (error) return null;
+  window.localStorage.setItem(KEY, id);
+  return id;
 }
 
 export async function trackEvent(event_name: string, payload: Record<string, unknown> = {}) {

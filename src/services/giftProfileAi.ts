@@ -20,11 +20,11 @@ export function normalizeStructuredGiftProfile(value: unknown): StructuredGiftPr
   if (!value || typeof value !== "object") return emptyStructuredGiftProfile();
   const record = value as Record<string, unknown>;
   return {
-    interests: cleanList(record.interests),
-    traits: cleanList(record.traits),
-    lifestyle: cleanList(record.lifestyle),
-    giftPreferences: cleanList(record.giftPreferences),
-    avoid: cleanList(record.avoid),
+    interests: cleanList(record['interests']),
+    traits: cleanList(record['traits']),
+    lifestyle: cleanList(record['lifestyle']),
+    giftPreferences: cleanList(record['giftPreferences']),
+    avoid: cleanList(record['avoid']),
   };
 }
 

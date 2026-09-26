@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ProductImageFrame } from "@/components/gift/ProductImageFrame";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,6 +99,6 @@ function ProductsPage() {
 }
 
 function Filter({ value, onChange, placeholder, options }: { value: string; onChange: (value: string) => void; placeholder: string; options: string[] }) { return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={`Filtrar por ${placeholder.toLowerCase()}`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas as {placeholder.toLowerCase()}s</SelectItem>{options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select>; }
-function ProductImage({ product }: { product: AdminProduct }) { return <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">{product.image_url ? <img src={product.image_url} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-muted-foreground" />}</div>; }
+function ProductImage({ product }: { product: AdminProduct }) { return <ProductImageFrame src={product.image_url} alt={product.name} className="h-11 w-11 shrink-0 rounded-md p-1.5" />; }
 function PackageEmpty() { return <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-muted"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>; }
 function formatDate(value: string) { return new Intl.DateTimeFormat("pt-BR").format(new Date(value)); }

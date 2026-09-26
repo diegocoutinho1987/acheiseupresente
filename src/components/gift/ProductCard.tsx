@@ -1,23 +1,17 @@
-import { useState } from "react";
 import { ExternalLink, Gift, Sparkles } from "lucide-react";
 import type { Recommendation } from "@/types";
 import { Button } from "@/components/ui/button";
+import { ProductImageFrame } from "@/components/gift/ProductImageFrame";
 import { formatPrice } from "@/utils/format";
 import { isDemoUrl } from "@/services/catalogService";
 
 export function ProductCard({ rec, index, onClick }: { rec: Recommendation; index: number; onClick: () => void }) {
   const { product } = rec;
-  const [broken, setBroken] = useState(false);
   return (
     <article className="fade-up flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-lift)]" style={{ animationDelay: `${index * 70}ms` }}>
-      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted">
-        {broken ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground"><Gift className="h-10 w-10" /></div>
-        ) : (
-          <img src={product.image} alt={product.name} loading="lazy" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
-        )}
+      <ProductImageFrame src={product.image} alt={product.name} className="relative aspect-[4/3] w-full shrink-0 p-3" fallback={<Gift className="h-10 w-10 text-muted-foreground" />}>
         <span className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur">{product.category}</span>
-      </div>
+      </ProductImageFrame>
       <div className="flex flex-1 flex-col p-5">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{product.store}</p>
         <h3 className="mt-1 text-lg leading-snug text-foreground">{product.name}</h3>

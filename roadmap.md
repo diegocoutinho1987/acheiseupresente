@@ -19,3 +19,4 @@
 - [x] Exibir métricas de cliques no Dashboard e na lista administrativa
 - [x] Validar prioridade de links, métricas e ausência de regressões
 - [x] Adicionar seleção e exclusão em massa de produtos no painel
+- [x] Padronizar imagens de produtos sem cortes em todas as telas

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ImageIcon, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProductImageFrame } from "@/components/gift/ProductImageFrame";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -33,7 +34,6 @@ function isValidUrl(value: string, optional = false) {
 export function ProductForm({ product, submitting, onSubmit, onCancel }: ProductFormProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -43,7 +43,6 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
-    if (key === "imageUrl") setImageFailed(false);
   }
 
   async function submit(event: React.FormEvent) {
@@ -88,9 +87,7 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
             <Field id="affiliateUrl" label="URL de afiliado" error={errors.affiliateUrl} hint="Se preenchido, este será o link utilizado quando o usuário clicar em Ver produto."><Input id="affiliateUrl" type="url" placeholder="https://loja.com/link-afiliado" value={form.affiliateUrl} onChange={(event) => set("affiliateUrl", event.target.value)} aria-invalid={!!errors.affiliateUrl} /></Field>
             <Field id="imageUrl" label="URL da imagem" error={errors.imageUrl}><Input id="imageUrl" type="url" placeholder="https://loja.com/imagem.jpg" value={form.imageUrl} onChange={(event) => set("imageUrl", event.target.value)} aria-invalid={!!errors.imageUrl} /></Field>
           </div>
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted">
-            {form.imageUrl && !imageFailed ? <img src={form.imageUrl} alt="Prévia do produto" className="h-full w-full object-cover" onError={() => setImageFailed(true)} /> : <div className="text-center text-muted-foreground"><ImageIcon className="mx-auto h-8 w-8" /><span className="mt-2 block text-xs">Prévia da imagem</span></div>}
-          </div>
+          <ProductImageFrame src={form.imageUrl} alt="Prévia do produto" className="aspect-square rounded-md border p-3" fallback={<div className="text-center text-muted-foreground"><ImageIcon className="mx-auto h-8 w-8" /><span className="mt-2 block text-xs">Prévia da imagem</span></div>} />
         </div>
       </section>
 

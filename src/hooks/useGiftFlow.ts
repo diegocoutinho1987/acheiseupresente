@@ -24,8 +24,10 @@ export function useGiftFlow() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     const minWait = new Promise((r) => setTimeout(r, isRefinement ? 2200 : MIN_LOADING_MS));
     try {
-      const [recs] = await Promise.all([getRecommendations(p, seen.current), minWait]);
+      const [result] = await Promise.all([getRecommendations(p, seen.current), minWait]);
+      const recs = result.recommendations;
       if (recs.length === 0) { setError("empty"); setPhase("error"); return; }
+      setProfile(result.profile);
       seen.current = [...seen.current, ...recs.map((r) => r.product.id)];
       setResults(recs);
       setPhase("results");
@@ -40,7 +42,7 @@ export function useGiftFlow() {
   const submit = useCallback(() => {
     track("profile_submitted", { recipient: profile.recipient, occasion: profile.occasion, budget: profile.budget });
     seen.current = [];
-    const p = { ...profile, refinement: "" as Refinement };
+    const p = { ...profile, refinement: "" as Refinement, structuredProfile: null };
     setProfile(p);
     run(p, false);
   }, [profile, run]);

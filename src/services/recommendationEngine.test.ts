@@ -41,6 +41,21 @@ describe("motor determinístico de recomendações", () => {
     expect(rankProducts(catalog, profile())[0]?.product.id).toBe("tech");
   });
 
+  it("usa o perfil estruturado pela IA para melhorar o ranking", () => {
+    const result = rankProducts(catalog, profile({
+      description: "Uma pessoa com interesses variados e rotina tranquila.",
+      structuredProfile: {
+        interests: ["tecnologia", "café"],
+        traits: ["prático"],
+        lifestyle: ["home office"],
+        giftPreferences: ["útil"],
+        avoid: [],
+      },
+    }));
+    expect(result[0]?.product.id).toBe("tech");
+    expect(result[0]?.reasons.join(" ")).toContain("tecnologia");
+  });
+
   it("prioriza casa e cozinha para mãe no Dia das Mães", () => {
     const result = rankProducts(catalog, profile({ recipient: "Mãe", occasion: "Dia das Mães", budget: "R$50 a R$100", description: "Ela gosta de casa e cozinha." }));
     expect(result[0]?.product.id).toBe("home");
@@ -51,6 +66,20 @@ describe("motor determinístico de recomendações", () => {
     const ids = rankProducts(catalog, profile({ avoid: "Não quero roupas." })).map((item) => item.product.id);
     expect(ids).not.toContain("shirt");
     expect(ids).not.toContain("inactive");
+  });
+
+  it("aplica as exclusões identificadas pela IA", () => {
+    const result = rankProducts(catalog, profile({
+      avoid: "",
+      structuredProfile: {
+        interests: [],
+        traits: [],
+        lifestyle: [],
+        giftPreferences: [],
+        avoid: ["roupas"],
+      },
+    }));
+    expect(result.map((item) => item.product.id)).not.toContain("shirt");
   });
 
   it("retorna menos de cinco e pode retornar vazio sem inventar produtos", () => {

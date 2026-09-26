@@ -21,6 +21,14 @@ export interface Recommendation {
   score: number;
 }
 
+export interface StructuredGiftProfile {
+  interests: string[];
+  traits: string[];
+  lifestyle: string[];
+  giftPreferences: string[];
+  avoid: string[];
+}
+
 export type Refinement =
   | ""
   | "Mais barato"
@@ -37,6 +45,7 @@ export interface GiftProfile {
   avoid: string;
   refinement: Refinement;
   feedback: string[];
+  structuredProfile?: StructuredGiftProfile | null;
 }
 
 export const emptyProfile: GiftProfile = {
@@ -47,4 +56,5 @@ export const emptyProfile: GiftProfile = {
   avoid: "",
   refinement: "",
   feedback: [],
+  structuredProfile: null,
 };

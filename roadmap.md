@@ -11,3 +11,6 @@
 - [x] Implementar pontuação determinística com filtros e explicações rastreáveis
 - [x] Integrar refinamentos, feedback e histórico da sessão ao ranking
 - [x] Validar os cenários do motor e o fluxo público em computador e celular
+- [x] Interpretar descrição e exclusões com IA no servidor
+- [x] Reutilizar o perfil estruturado em refinamentos e personalizar explicações
+- [x] Validar chamada real, fallback e fluxo público sem regressões

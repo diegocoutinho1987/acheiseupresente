@@ -1,5 +1,6 @@
 import type { GiftProfile, Product, Recommendation, Refinement } from "@/types";
 import { BUDGETS } from "@/data/options";
+import { structuredProfileTerms } from "@/services/giftProfileAi";
 
 export interface UserGiftProfile {
   recipient: string;
@@ -10,6 +11,8 @@ export interface UserGiftProfile {
   avoid: string;
   refinement: Refinement;
   feedback: string[];
+  interpretedTerms: string[];
+  interpretedAvoid: string[];
 }
 
 interface ScoredProduct {
@@ -98,6 +101,8 @@ export function toUserGiftProfile(profile: GiftProfile): UserGiftProfile {
     avoid: profile.avoid === "__none__" ? "" : profile.avoid,
     refinement: profile.refinement,
     feedback: profile.feedback,
+    interpretedTerms: structuredProfileTerms(profile.structuredProfile),
+    interpretedAvoid: profile.structuredProfile?.avoid ?? [],
   };
 }
 
@@ -138,16 +143,18 @@ function previousSimilarity(product: Product, previousProducts: Product[]): numb
 }
 
 export function calculateProductScore(product: Product, profile: UserGiftProfile, previousProducts: Product[] = []): ScoredProduct | null {
-  if (matchesAvoidTerms(product, profile.avoid) || isOverBudget(product.price, profile.budgetMax)) return null;
+  const avoidText = [profile.avoid, ...profile.interpretedAvoid].filter(Boolean).join(" ");
+  if (matchesAvoidTerms(product, avoidText) || isOverBudget(product.price, profile.budgetMax)) return null;
 
   let score = 0;
   const reasons: string[] = [];
-  const interests = extractInterests(profile.description);
+  const extractedInterests = extractInterests(profile.description);
+  const interests = [...new Set([...extractedInterests, ...profile.interpretedTerms])];
   const normalizedTags = product.tags.map(normalize);
   const matchedInterests = interests.filter((interest) => normalizedTags.some((tag) => sameConcept(interest, tag)));
   if (matchedInterests.length) {
     score += matchedInterests.length * 10;
-    reasons.push(`Combina com ${matchedInterests.slice(0, 3).join(", ")}, interesses mencionados na descrição.`);
+    reasons.push(`Combina com ${matchedInterests.slice(0, 3).join(", ")}, características identificadas no perfil.`);
   }
 
   if (product.occasions.some((occasion) => sameConcept(occasion, profile.occasion))) {

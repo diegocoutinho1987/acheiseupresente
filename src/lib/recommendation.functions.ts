@@ -12,6 +12,16 @@ const InputSchema = z.object({
   refinement_preference: z.string().optional(),
 });
 
+type Recommendation = {
+  id: string;
+  name: string;
+  price: number;
+  store: string;
+  image_url: string | null;
+  affiliate_url: string;
+  justification: string;
+};
+
 type Parsed = {
   interests: string[];
   personality: string[];
@@ -80,7 +90,7 @@ const norm = (v: string) =>
 
 export const processRecommendation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<{ products: Recommendation[] }> => {
     const [rangeMin, rangeMax] = BUDGET_RANGES[data.budget_range] ?? [0, 1000000];
 
     // 1. Parse the free-text profile with DeepSeek
@@ -155,7 +165,7 @@ export const processRecommendation = createServerFn({ method: "POST" })
       .slice(0, 5);
 
     if (scored.length === 0) {
-      return { products: [] as Array<Record<string, unknown>> };
+      return { products: [] };
     }
 
     // 3. Generate justifications with DeepSeek

@@ -15,11 +15,11 @@ type ProductFormProps = {
 };
 
 type FormState = {
-  name: string; description: string; price: string; store: string; affiliateUrl: string;
+  name: string; description: string; price: string; store: string; productUrl: string; affiliateUrl: string;
   imageUrl: string; category: string; tags: string; occasions: string; profiles: string; active: boolean;
 };
 
-const emptyForm: FormState = { name: "", description: "", price: "", store: "", affiliateUrl: "", imageUrl: "", category: "", tags: "", occasions: "", profiles: "", active: true };
+const emptyForm: FormState = { name: "", description: "", price: "", store: "", productUrl: "", affiliateUrl: "", imageUrl: "", category: "", tags: "", occasions: "", profiles: "", active: true };
 
 function list(value: string) {
   return [...new Set(value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))];
@@ -37,7 +37,7 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
 
   useEffect(() => {
     if (!product) return;
-    setForm({ name: product.name, description: product.description, price: String(product.price), store: product.store, affiliateUrl: product.affiliate_url, imageUrl: product.image_url ?? "", category: product.category, tags: product.tags.join(", "), occasions: product.occasions.join(", "), profiles: product.profiles.join(", "), active: product.active });
+    setForm({ name: product.name, description: product.description, price: String(product.price), store: product.store, productUrl: product.product_url, affiliateUrl: product.affiliate_url, imageUrl: product.image_url ?? "", category: product.category, tags: product.tags.join(", "), occasions: product.occasions.join(", "), profiles: product.profiles.join(", "), active: product.active });
   }, [product]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -54,14 +54,15 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
     if (!(price > 0)) nextErrors.price = "Informe um preço maior que zero.";
     if (!form.store.trim()) nextErrors.store = "Informe a loja.";
     if (!form.category.trim()) nextErrors.category = "Informe a categoria.";
-    if (!form.affiliateUrl.trim()) nextErrors.affiliateUrl = "Informe o link do produto.";
-    else if (!isValidUrl(form.affiliateUrl.trim())) nextErrors.affiliateUrl = "Use um endereço válido começando com http:// ou https://.";
+    if (!form.productUrl.trim()) nextErrors.productUrl = "Informe o link do produto.";
+    else if (!isValidUrl(form.productUrl.trim())) nextErrors.productUrl = "Use um endereço válido começando com http:// ou https://.";
+    if (!isValidUrl(form.affiliateUrl.trim(), true)) nextErrors.affiliateUrl = "Use um endereço válido começando com http:// ou https://.";
     if (!isValidUrl(form.imageUrl.trim(), true)) nextErrors.imageUrl = "Use um endereço de imagem válido.";
     if (Object.keys(nextErrors).length) { setErrors(nextErrors); return; }
 
     await onSubmit({
       name: form.name.trim(), description: form.description.trim(), price, store: form.store.trim(),
-      affiliate_url: form.affiliateUrl.trim(), image_url: form.imageUrl.trim() || null, category: form.category.trim(),
+      product_url: form.productUrl.trim(), affiliate_url: form.affiliateUrl.trim(), image_url: form.imageUrl.trim() || null, category: form.category.trim(),
       tags: list(form.tags), occasions: list(form.occasions), profiles: list(form.profiles), active: form.active,
     });
   }
@@ -83,7 +84,8 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
         <h2 className="text-lg font-semibold">Links e imagem</h2>
         <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_220px]">
           <div className="space-y-5">
-            <Field id="affiliateUrl" label="URL do produto / afiliado" required error={errors.affiliateUrl}><Input id="affiliateUrl" type="url" placeholder="https://loja.com/produto" value={form.affiliateUrl} onChange={(event) => set("affiliateUrl", event.target.value)} aria-invalid={!!errors.affiliateUrl} /></Field>
+            <Field id="productUrl" label="URL do produto" required error={errors.productUrl}><Input id="productUrl" type="url" placeholder="https://loja.com/produto" value={form.productUrl} onChange={(event) => set("productUrl", event.target.value)} aria-invalid={!!errors.productUrl} /></Field>
+            <Field id="affiliateUrl" label="URL de afiliado" error={errors.affiliateUrl} hint="Se preenchido, este será o link utilizado quando o usuário clicar em Ver produto."><Input id="affiliateUrl" type="url" placeholder="https://loja.com/link-afiliado" value={form.affiliateUrl} onChange={(event) => set("affiliateUrl", event.target.value)} aria-invalid={!!errors.affiliateUrl} /></Field>
             <Field id="imageUrl" label="URL da imagem" error={errors.imageUrl}><Input id="imageUrl" type="url" placeholder="https://loja.com/imagem.jpg" value={form.imageUrl} onChange={(event) => set("imageUrl", event.target.value)} aria-invalid={!!errors.imageUrl} /></Field>
           </div>
           <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted">

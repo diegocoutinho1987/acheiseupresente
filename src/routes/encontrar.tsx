@@ -13,7 +13,7 @@ import { FeedbackOptions } from "@/components/gift/FeedbackOptions";
 import { Button } from "@/components/ui/button";
 import { RECIPIENTS, OCCASIONS, BUDGETS } from "@/data/options";
 import { useGiftFlow, TOTAL_STEPS } from "@/hooks/useGiftFlow";
-import { track, type AnalyticsEvent } from "@/services/analytics";
+import { registerProductClick, track, type AnalyticsEvent } from "@/services/analytics";
 
 export const Route = createFileRoute("/encontrar")({
   head: () => ({
@@ -127,7 +127,7 @@ function FinderPage() {
                 {" · "}<button onClick={flow.editAnswers} className="font-medium text-foreground underline underline-offset-4">editar</button>
               </p>
             </div>
-            <RecommendationList items={flow.results} onProductClick={(r) => track("product_clicked", { id: r.product.id })} />
+            <RecommendationList items={flow.results} onProductClick={(r) => { void registerProductClick(r.product.id, profile.refinement ? "refinement" : "recommendation"); }} />
             <section className="mx-auto mt-14 max-w-2xl rounded-2xl border bg-card p-6 text-center sm:p-8">
               <h2 className="text-xl text-foreground">Não encontrou exatamente o que queria?</h2>
               <div className="mt-5"><RefinementButtons active={profile.refinement} onSelect={flow.refine} /></div>

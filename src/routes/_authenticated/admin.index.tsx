@@ -23,7 +23,6 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [clicks, setClicks] = useState<ClickMetrics>({ total: 0, last7Days: 0, byProduct: {} });
   useEffect(() => { Promise.all([getProducts(), getClickMetrics()]).then(([items, metrics]) => { setProducts(items); setClicks(metrics); }).catch(() => toast.error("Não foi possível carregar os indicadores.")).finally(() => setLoading(false)); }, []);
-  const categories = useMemo(() => Object.entries(products.reduce<Record<string, number>>((acc, product) => { acc[product.category] = (acc[product.category] ?? 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]), [products]);
   const active = products.filter((product) => product.active).length;
   const mostClicked = useMemo(() => products.map((product) => ({ product, clicks: clicks.byProduct[product.id] ?? 0 })).filter((item) => item.clicks > 0).sort((a, b) => b.clicks - a.clicks).slice(0, 5), [products, clicks]);
   const cards = [

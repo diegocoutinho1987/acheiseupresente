@@ -8,3 +8,4 @@
 - Analytics and product-click tracking go through `src/services/analytics.ts`; public users can only write events, while click metrics remain admin-only.
 - Product destinations resolve as `affiliate_url || product_url`; links remain editable only through the protected catalog administration.
 - AI only interprets the user's free text and personalizes explanations through server functions; it never selects or creates products. The deterministic engine remains authoritative and is the fallback when AI is unavailable.
+- Product imagery uses the shared `ProductImageFrame` so public and admin views preserve proportions without cropping or enlarging small assets.

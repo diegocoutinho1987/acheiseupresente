@@ -17,4 +17,4 @@
 - [x] Separar URL do produto e URL de afiliado preservando os links atuais
 - [x] Registrar cliques e eventos básicos sem dados pessoais
 - [x] Exibir métricas de cliques no Dashboard e na lista administrativa
-- [ ] Validar prioridade de links, métricas e ausência de regressões
+- [x] Validar prioridade de links, métricas e ausência de regressões

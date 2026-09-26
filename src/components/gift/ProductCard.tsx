@@ -3,6 +3,7 @@ import { ExternalLink, Gift, Sparkles } from "lucide-react";
 import type { Recommendation } from "@/types";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/utils/format";
+import { isDemoUrl } from "@/services/catalogService";
 
 export function ProductCard({ rec, index, onClick }: { rec: Recommendation; index: number; onClick: () => void }) {
   const { product } = rec;
@@ -30,7 +31,7 @@ export function ProductCard({ rec, index, onClick }: { rec: Recommendation; inde
           <Button asChild className="w-full rounded-full" onClick={onClick}>
             <a href={product.url} target="_blank" rel="noopener noreferrer">Ver produto <ExternalLink className="h-4 w-4" /></a>
           </Button>
-          <p className="mt-2 text-center text-[11px] text-muted-foreground">Produto de demonstração</p>
+          {isDemoUrl(product.url) && <p className="mt-2 text-center text-[11px] text-muted-foreground">Produto de demonstração</p>}
         </div>
       </div>
     </article>

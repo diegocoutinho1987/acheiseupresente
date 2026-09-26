@@ -1,5 +1,5 @@
 import type { GiftProfile, Product, Recommendation } from "@/types";
-import { PRODUCTS } from "@/data/products";
+import { getCatalog } from "@/services/catalogService";
 import { BUDGETS } from "@/data/options";
 
 /**
@@ -117,14 +117,14 @@ function buildReason(p: Product, profile: GiftProfile, matched: string[], inBudg
 
 export async function getRecommendations(input: GiftProfile, previousIds: string[] = []): Promise<Recommendation[]> {
   const profile = { ...input, avoid: input.avoid === "__none__" ? "" : input.avoid };
-  await new Promise((r) => setTimeout(r, 400)); // simula latência de rede
+  const catalog = await getCatalog();
   const budget = BUDGETS.find((b) => b.label === profile.budget) ?? BUDGETS[2]!;
   let { min, max } = budget;
   if (profile.refinement === "Mais barato") { max = Math.max(50, max === Infinity ? min : max * 0.7); min = 0; }
   const interests = extractInterests(`${profile.description} `);
   const previous = new Set(previousIds);
 
-  const ranked = PRODUCTS.filter((p) => !avoidMatch(p, profile.avoid))
+  const ranked = catalog.filter((p) => !avoidMatch(p, profile.avoid))
     .filter((p) => p.price <= (max === Infinity ? Infinity : max * 1.25))
     .map((p) => ({ p, ...score(p, profile, interests, min, max, previous) }))
     .sort((a, b) => b.s - a.s);

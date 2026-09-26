@@ -6,4 +6,4 @@
 - Admin area: `/admin` is a protected layout guarded by `has_role(admin)` with dashboard, product list, new and edit routes; all catalog CRUD goes through `src/services/productService.ts` so a future API can replace it in one place.
 - UI components live in `src/components/gift/`; flow state lives in `src/hooks/useGiftFlow.ts` around a single `GiftProfile`.
 - Analytics go through `src/services/analytics.ts` (console mock) so a real sink can be plugged in later.
-- No real AI in this MVP.
+- AI only interprets the user's free text and personalizes explanations through server functions; it never selects or creates products. The deterministic engine remains authoritative and is the fallback when AI is unavailable.

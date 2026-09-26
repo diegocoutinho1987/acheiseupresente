@@ -9,11 +9,11 @@ export function ProductCard({ rec, index, onClick }: { rec: Recommendation; inde
   const [broken, setBroken] = useState(false);
   return (
     <article className="fade-up flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-lift)]" style={{ animationDelay: `${index * 70}ms` }}>
-      <div className="relative aspect-[4/3] bg-muted">
+      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted">
         {broken ? (
           <div className="flex h-full items-center justify-center text-muted-foreground"><Gift className="h-10 w-10" /></div>
         ) : (
-          <img src={product.image} alt={product.name} loading="lazy" onError={() => setBroken(true)} className="h-full w-full object-cover" />
+          <img src={product.image} alt={product.name} loading="lazy" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" />
         )}
         <span className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur">{product.category}</span>
       </div>

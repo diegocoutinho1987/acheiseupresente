@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Package, PackageCheck, PackageX, Shapes } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getProducts, type AdminProduct } from "@/services/productService";
 import { formatPrice } from "@/utils/format";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function DashboardPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { getProducts().then(setProducts).finally(() => setLoading(false)); }, []);
+  useEffect(() => { getProducts().then(setProducts).catch(() => toast.error("Não foi possível carregar os produtos.")).finally(() => setLoading(false)); }, []);
   const categories = useMemo(() => Object.entries(products.reduce<Record<string, number>>((acc, product) => { acc[product.category] = (acc[product.category] ?? 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]), [products]);
   const active = products.filter((product) => product.active).length;
   const cards = [

@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, Wallet, Store, Sparkle } from "lucide-react";
 import { SiteHeader } from "@/components/gift/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { PRODUCTS } from "@/data/products";
+import type { Product } from "@/types";
+import { getCatalog } from "@/services/catalogService";
 import { formatPrice } from "@/utils/format";
 import { track } from "@/services/analytics";
 
@@ -30,14 +31,21 @@ const BENEFITS = [
 const STEPS = ["Conte para quem é o presente", "Fale sobre a pessoa", "Receba ideias personalizadas"];
 
 const EXAMPLES = [
-  { id: "p13", who: "Irmão, 28 anos", reason: "Ama café e tecnologia — une os dois num objeto do dia a dia." },
-  { id: "p09", who: "Mãe caseira", reason: "Gosta de cozinhar e de plantas: uma horta de temperos na janela." },
-  { id: "p22", who: "Namorada criativa", reason: "Curte arte e experiências novas — uma tarde fazendo cerâmica juntos." },
+  { name: "Caneca térmica com controle de temperatura", who: "Irmão, 28 anos", reason: "Ama café e tecnologia — une os dois num objeto do dia a dia." },
+  { name: "Kit de jardinagem para apartamento", who: "Mãe caseira", reason: "Gosta de cozinhar e de plantas: uma horta de temperos na janela." },
+  { name: "Experiência: aula de cerâmica", who: "Namorada criativa", reason: "Curte arte e experiências novas — uma tarde fazendo cerâmica juntos." },
 ];
 
 function Home() {
-  useEffect(() => { track("home_view"); }, []);
-  const examples = EXAMPLES.map((e) => ({ ...e, product: PRODUCTS.find((p) => p.id === e.id)! }));
+  const [catalog, setCatalog] = useState<Product[]>([]);
+  useEffect(() => {
+    track("home_view");
+    getCatalog().then(setCatalog).catch(() => setCatalog([]));
+  }, []);
+  const examples = EXAMPLES.flatMap((example) => {
+    const product = catalog.find((item) => item.name === example.name);
+    return product ? [{ ...example, product }] : [];
+  });
 
   return (
     <div className="min-h-screen">
@@ -83,7 +91,7 @@ function Home() {
         <section className="mx-auto max-w-5xl px-5 py-16">
           <h2 className="text-center text-2xl text-foreground sm:text-3xl">Exemplos de recomendações</h2>
           <p className="mt-2 text-center text-muted-foreground">Cada sugestão vem com o motivo da escolha.</p>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-3" aria-busy={catalog.length === 0}>
             {examples.map(({ product, who, reason }) => (
               <div key={product.id} className="overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-soft)]">
                 <img src={product.image} alt={product.name} loading="lazy" className="aspect-[4/3] w-full object-cover" />

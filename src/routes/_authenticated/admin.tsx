@@ -47,7 +47,11 @@ function AdminPage() {
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
-      const { data } = await supabase.rpc("has_role", { _user_id: u.user!.id, _role: "admin" });
+      if (!u.user) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
       setIsAdmin(!!data);
       if (data) load();
     })();
@@ -117,14 +121,14 @@ function AdminPage() {
             {form && (
               <form onSubmit={save} className="mt-6 grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2">
                 <h2 className="font-display text-xl font-semibold sm:col-span-2">{form.id ? "Editar produto" : "Novo produto"}</h2>
-                <F label="Nome"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></F>
-                <F label="Preço (R$)"><Input inputMode="decimal" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></F>
-                <F label="Link de afiliado" wide><Input type="url" value={form.affiliate_url} onChange={(e) => setForm({ ...form, affiliate_url: e.target.value })} placeholder="https://..." required /></F>
-                <F label="Loja"><Input value={form.store} onChange={(e) => setForm({ ...form, store: e.target.value })} /></F>
-                <F label="Categoria"><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></F>
-                <F label="Link da imagem" wide><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." /></F>
-                <F label="Descrição" wide><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></F>
-                <F label="Interesses (separados por vírgula — ex.: café, leitura, viagem)" wide><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} /></F>
+                <F id="product-name" label="Nome"><Input id="product-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></F>
+                <F id="product-price" label="Preço (R$)"><Input id="product-price" inputMode="decimal" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></F>
+                <F id="affiliate-url" label="Link de afiliado" wide><Input id="affiliate-url" type="url" value={form.affiliate_url} onChange={(e) => setForm({ ...form, affiliate_url: e.target.value })} placeholder="https://..." required /></F>
+                <F id="product-store" label="Loja"><Input id="product-store" value={form.store} onChange={(e) => setForm({ ...form, store: e.target.value })} /></F>
+                <F id="product-category" label="Categoria"><Input id="product-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></F>
+                <F id="image-url" label="Link da imagem" wide><Input id="image-url" type="url" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." /></F>
+                <F id="product-description" label="Descrição" wide><Textarea id="product-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></F>
+                <F id="product-tags" label="Interesses (separados por vírgula — ex.: café, leitura, viagem)" wide><Input id="product-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} /></F>
                 <label className="flex items-center gap-2 text-sm"><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /> Aparece nas sugestões</label>
                 <div className="flex justify-end gap-2 sm:col-span-2">
                   <Button type="button" variant="ghost" onClick={() => setForm(null)}>Cancelar</Button>
@@ -157,6 +161,6 @@ function AdminPage() {
   );
 }
 
-function F({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
-  return <div className={`space-y-1.5 ${wide ? "sm:col-span-2" : ""}`}><Label>{label}</Label>{children}</div>;
+function F({ id, label, wide, children }: { id: string; label: string; wide?: boolean; children: React.ReactNode }) {
+  return <div className={`space-y-1.5 ${wide ? "sm:col-span-2" : ""}`}><Label htmlFor={id}>{label}</Label>{children}</div>;
 }

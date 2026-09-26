@@ -115,6 +115,6 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
   );
 }
 
-function Field({ id, label, required, error, hint, className = "", children }: { id: string; label: string; required?: boolean; error?: string; hint?: string; className?: string; children: React.ReactNode }) {
+function Field({ id, label, required, error, hint, className = "", children }: { id: string; label: string; required?: boolean; error?: string | undefined; hint?: string | undefined; className?: string; children: React.ReactNode }) {
   return <div className={className}><Label htmlFor={id}>{label}{required && <span className="text-destructive"> *</span>}</Label><div className="mt-2">{children}</div>{error ? <p className="mt-1.5 text-sm text-destructive">{error}</p> : hint ? <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p> : null}</div>;
 }

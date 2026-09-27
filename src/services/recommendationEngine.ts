@@ -15,6 +15,7 @@ export interface UserGiftProfile {
   feedback: string[];
   interpretedTerms: string[];
   interpretedAvoid: string[];
+  quickTerms: string[];
 }
 
 interface ScoredProduct {
@@ -107,6 +108,7 @@ export function toUserGiftProfile(profile: GiftProfile): UserGiftProfile {
     feedback: profile.feedback,
     interpretedTerms: structuredProfileTerms(profile.structuredProfile),
     interpretedAvoid: profile.structuredProfile?.avoid ?? [],
+    quickTerms: profile.quickContext?.terms ?? [],
   };
 }
 
@@ -170,6 +172,13 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
     score += 20;
     reasons.push(`Foi cadastrado para o perfil ${profile.recipient.toLowerCase()}.`);
   }
+  const quickTerms = profile.quickTerms.map(normalize).filter(Boolean);
+  const quickMatches = quickTerms.filter((term) => [product.name, product.description, ...(product.categories ?? [product.category]), ...product.tags].some((value) => normalize(value).includes(term)));
+  if (quickMatches.length) {
+    score += quickMatches.length * 15;
+    reasons.push("Tem características que combinam com essa busca.");
+  }
+
   const matchedCategory = (product.categories ?? [product.category]).find((category) => interests.some((interest) => sameConcept(interest, category)));
   if (matchedCategory) {
     score += 10;
@@ -200,13 +209,13 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
   return { product, score, reasons };
 }
 
-function diversify(items: ScoredProduct[], stronger: boolean): ScoredProduct[] {
+function diversify(items: ScoredProduct[], stronger: boolean, limit: number): ScoredProduct[] {
   const remaining = [...items];
   const selected: ScoredProduct[] = [];
   const categoryCounts = new Map<string, number>();
   const penalty = stronger ? 18 : 8;
   const categoriesFor = (product: Product) => [...new Set((product.categories?.length ? product.categories : [product.category]).map(normalize))];
-  while (remaining.length && selected.length < 3) {
+  while (remaining.length && selected.length < limit) {
     remaining.sort((a, b) => {
       const repeatsA = Math.max(0, ...categoriesFor(a.product).map((category) => categoryCounts.get(category) ?? 0));
       const repeatsB = Math.max(0, ...categoriesFor(b.product).map((category) => categoryCounts.get(category) ?? 0));
@@ -226,7 +235,7 @@ function explanation(reasons: string[]): string {
   return reasons.join(" ");
 }
 
-export function rankProducts(products: Product[], giftProfile: GiftProfile, previousIds: string[] = []): Recommendation[] {
+export function rankProducts(products: Product[], giftProfile: GiftProfile, previousIds: string[] = [], limit = 3): Recommendation[] {
   const profile = toUserGiftProfile(giftProfile);
   const previous = new Set(previousIds);
   const previousProducts = products.filter((product) => previous.has(product.id));
@@ -236,12 +245,12 @@ export function rankProducts(products: Product[], giftProfile: GiftProfile, prev
     .filter((item): item is ScoredProduct => item !== null);
 
   const unseen = scored.filter((item) => !previous.has(item.product.id));
-  const candidates = unseen.length >= 3
+  const candidates = unseen.length >= limit
     ? unseen
     : scored.map((item) => ({ ...item, score: item.score - (previous.has(item.product.id) ? 3 : 0) }));
   const strongerDiversity = profile.feedback.includes("Muito comum") || profile.feedback.includes("Quero algo diferente");
 
-  return diversify(candidates, strongerDiversity).map((item) => ({
+  return diversify(candidates, strongerDiversity, limit).map((item) => ({
     product: item.product,
     score: item.score,
     reasons: item.reasons,

@@ -36,6 +36,13 @@
       "when": 1790473785792,
       "tag": "0004_centralize_product_taxonomies",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790474393283,
+      "tag": "0005_preserve_questionnaire_choices",
+      "breakpoints": true
     }
   ]
 }

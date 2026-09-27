@@ -1,5 +1,6 @@
 import type { Product, Recommendation } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { personalizeRecommendationExplanations } from "@/services/giftAi.functions";
 import type { QuickSuggestion } from "@/data/quickSuggestions";
 
 const QUICK_TIMEOUT_MS = 10_000;
@@ -380,5 +381,40 @@ export async function getQuickSuggestions(
   }
 
   const selected = selectResultsWithLog(products, context.excludeIds);
-  return selected.map((product) => toRecommendation(product, context.explanation));
+  const recommendations = selected.map((product) => toRecommendation(product, context.explanation));
+
+  try {
+    const profileContext = {
+      recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
+      recipientText: "",
+      recipientId: null,
+      occasion: context.type === "occasion" ? context.occasionName : "",
+      occasionText: "",
+      occasionId: null,
+      budget: "Qualquer valor",
+      description: context.label,
+      avoid: "",
+      refinement: "",
+      feedback: [],
+      structuredProfile: { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] },
+      quickContext: { key: context.key, label: context.label, terms: [] },
+    } as const;
+
+    try {
+      const explanations = await withTimeout(
+        personalizeRecommendationExplanations({ data: { profile: profileContext, recommendations } }),
+        "gerar_explicacoes",
+      );
+      return recommendations.map((item) => ({
+        ...item,
+        explanation: explanations[item.product.id]?.trim() || item.explanation,
+      }));
+    } catch (error) {
+      logError("gerar_explicacoes", error);
+      return recommendations;
+    }
+  } catch (error) {
+    logError("gerar_explicacoes", error);
+    return recommendations;
+  }
 }

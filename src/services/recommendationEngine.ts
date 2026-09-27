@@ -193,7 +193,7 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
     reasons.push("Prioriza um valor menor dentro das opções compatíveis.");
   }
 
-  if (previousProducts.length && (profile.feedback.includes("Não combina com a pessoa") || profile.feedback.includes("Já tem algo parecido"))) {
+  if (previousProducts.length && (profile.feedback.includes("Não combina com a pessoa") || profile.feedback.includes("Já tem algo parecido") || profile.feedback.includes("Quero algo diferente") || profile.feedback.includes("Muito comum"))) {
     score -= previousSimilarity(product, previousProducts) * 8;
   }
 
@@ -206,7 +206,7 @@ function diversify(items: ScoredProduct[], stronger: boolean): ScoredProduct[] {
   const categoryCounts = new Map<string, number>();
   const penalty = stronger ? 18 : 8;
   const categoriesFor = (product: Product) => [...new Set((product.categories?.length ? product.categories : [product.category]).map(normalize))];
-  while (remaining.length && selected.length < 5) {
+  while (remaining.length && selected.length < 3) {
     remaining.sort((a, b) => {
       const repeatsA = Math.max(0, ...categoriesFor(a.product).map((category) => categoryCounts.get(category) ?? 0));
       const repeatsB = Math.max(0, ...categoriesFor(b.product).map((category) => categoryCounts.get(category) ?? 0));
@@ -236,7 +236,7 @@ export function rankProducts(products: Product[], giftProfile: GiftProfile, prev
     .filter((item): item is ScoredProduct => item !== null);
 
   const unseen = scored.filter((item) => !previous.has(item.product.id));
-  const candidates = profile.refinement === "Quero outras opções" && unseen.length > 0
+  const candidates = unseen.length >= 3
     ? unseen
     : scored.map((item) => ({ ...item, score: item.score - (previous.has(item.product.id) ? 3 : 0) }));
   const strongerDiversity = profile.feedback.includes("Muito comum") || profile.feedback.includes("Quero algo diferente");

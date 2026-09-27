@@ -1,42 +1,28 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GiftProfile, Recommendation, Refinement } from "@/types";
-import { getRecommendations } from "@/services/recommendationService";
-import { getActiveTaxonomyOptions } from "@/services/taxonomyService";
 import { track } from "@/services/analytics";
 import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
+import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext } from "@/services/quickSuggestionService";
 
-const QUICK_LIMIT = 6;
-const QUICK_TIMEOUT_MS = 15000;
+const EMPTY_STRUCTURED_PROFILE = { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] };
 
-function normalize(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\(a\)/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+function buildProfile(context: QuickSuggestionContext): GiftProfile {
+  return {
+    recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
+    recipientText: "",
+    recipientId: context.type === "profile" ? context.profileId : null,
+    occasion: context.type === "occasion" ? context.occasionName : "",
+    occasionText: "",
+    occasionId: context.type === "occasion" ? context.occasionId : null,
+    budget: "Qualquer valor",
+    description: context.label,
+    avoid: "",
+    refinement: "" as Refinement,
+    feedback: [],
+    structuredProfile: EMPTY_STRUCTURED_PROFILE,
+    quickContext: { key: context.key, label: context.label, terms: [] },
+  };
 }
-
-function taxonomyMatches(left: string, right: string): boolean {
-  const normalizeWords = (value: string) =>
-    normalize(value)
-      .split(" ")
-      .filter((word) => !["da", "das", "do", "dos", "de"].includes(word))
-      .map((word) => (word.length > 5 && word.endsWith("s") ? word.slice(0, -1) : word));
-
-  const a = normalizeWords(left);
-  const b = normalizeWords(right);
-  return a.length === b.length && a.every((word, index) => word === b[index]);
-}
-
-const EMPTY_STRUCTURED_PROFILE = {
-  interests: [],
-  traits: [],
-  lifestyle: [],
-  giftPreferences: [],
-  avoid: [],
-};
 
 export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
   const suggestion = useMemo(() => (key ? getQuickSuggestion(key) : null), [key]);
@@ -45,83 +31,50 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
   const [results, setResults] = useState<Recommendation[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [error, setError] = useState<"load" | "empty" | null>(null);
-  const seen = useRef<string[]>([]);
+  const [context, setContext] = useState<QuickSuggestionContext | null>(null);
   const started = useRef(false);
+  const currentKey = useRef<QuickSuggestionKey | undefined>(key);
 
-  const buildProfile = useCallback(async (): Promise<GiftProfile> => {
-    if (!suggestion) throw new Error("Busca rápida inválida");
+  useEffect(() => {
+    if (currentKey.current === key) return;
+    currentKey.current = key;
+    started.current = false;
+    setPhase("idle");
+    setProfile(null);
+    setResults([]);
+    setContext(null);
+    setError(null);
+  }, [key]);
 
-    const [profiles, occasions] = await Promise.all([
-      suggestion.profileName ? getActiveTaxonomyOptions("profiles") : Promise.resolve([]),
-      suggestion.occasionName ? getActiveTaxonomyOptions("occasions") : Promise.resolve([]),
-    ]);
-
-    const profileOption = suggestion.profileName
-      ? profiles.find((item) => taxonomyMatches(item.name, suggestion.profileName))
-      : undefined;
-    const occasionOption = suggestion.occasionName
-      ? occasions.find((item) => taxonomyMatches(item.name, suggestion.occasionName))
-      : undefined;
-
-    return {
-      recipient: profileOption?.name ?? "",
-      recipientText: "",
-      recipientId: profileOption?.id ?? null,
-      occasion: occasionOption?.name ?? suggestion.occasionName ?? "",
-      occasionText: "",
-      occasionId: occasionOption?.id ?? null,
-      budget: "Qualquer valor",
-      description: suggestion.label,
-      avoid: "",
-      refinement: "" as Refinement,
-      feedback: [],
-      structuredProfile: EMPTY_STRUCTURED_PROFILE,
-      quickContext: {
-        key: suggestion.key,
-        label: suggestion.label,
-        terms: suggestion.terms,
-      },
-    };
-  }, [suggestion]);
-
-  const run = useCallback(async (nextProfile: GiftProfile, isRefinement: boolean) => {
+  const run = useCallback(async (nextContext: QuickSuggestionContext, nextProfile: GiftProfile) => {
     setPhase("loading");
     setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
-      const result = await Promise.race([
-        getRecommendations(nextProfile, seen.current, QUICK_LIMIT, {
-          explanationTimeoutMs: 8000,
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("Quick recommendation timeout")), QUICK_TIMEOUT_MS),
-        ),
-      ]);
-
-      if (result.recommendations.length === 0) {
-        setError("empty");
+      const recommendations = await getQuickSuggestions(nextContext);
+      if (recommendations.length === 0) {
         setPhase("error");
+        setError("empty");
         return;
       }
 
-      setProfile(result.profile);
-      setResults(result.recommendations);
-      seen.current = [...seen.current, ...result.recommendations.map((item) => item.product.id)];
+      setContext(nextContext);
+      setProfile(nextProfile);
+      setResults(recommendations);
       setPhase("results");
 
       track("quick_recommendation_generated", {
-        key: nextProfile.quickContext?.key,
-        label: nextProfile.quickContext?.label,
-        count: result.recommendations.length,
-        productIds: result.recommendations.map((item) => item.product.id),
-        refinement: nextProfile.refinement,
-        feedback: nextProfile.feedback,
-        stage: isRefinement ? "refinement" : "initial",
+        key: nextContext.key,
+        label: nextContext.label,
+        count: recommendations.length,
+        productIds: recommendations.map((item) => item.product.id),
+        stage: nextProfile.feedback.length ? "feedback" : "initial",
       });
-    } catch {
-      setError("load");
+    } catch (error) {
+      console.error("[quick-suggestions] Falha ao carregar sugestões", { key: nextContext.key, error });
       setPhase("error");
+      setError("load");
     }
   }, []);
 
@@ -129,23 +82,22 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     if (!suggestion || started.current) return;
 
     started.current = true;
-    track("quick_suggestion_clicked", {
-      key: suggestion.key,
-      label: suggestion.label,
-    });
-    seen.current = [];
+    track("quick_suggestion_clicked", { key: suggestion.key, label: suggestion.label });
     setPhase("loading");
     setError(null);
 
     try {
-      const nextProfile = await buildProfile();
+      const nextContext = await resolveQuickSuggestionContext(suggestion);
+      const nextProfile = buildProfile(nextContext);
+      setContext(nextContext);
       setProfile(nextProfile);
-      await run(nextProfile, false);
-    } catch {
-      setError("load");
+      await run(nextContext, nextProfile);
+    } catch (error) {
+      console.error("[quick-suggestions] Falha ao preparar contexto", { key: suggestion.key, error });
       setPhase("error");
+      setError("load");
     }
-  }, [buildProfile, run, suggestion]);
+  }, [run, suggestion]);
 
   const retry = useCallback(() => {
     if (!suggestion) return;
@@ -153,57 +105,28 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     void start();
   }, [start, suggestion]);
 
-  const refine = useCallback((refinement: Refinement) => {
-    if (!profile || feedbackLoading) return;
-
-    track("refinement_clicked", {
-      refinement,
-      source: "quick_suggestion",
-      key: profile.quickContext?.key,
-    });
-
-    const nextProfile = { ...profile, refinement };
-    setProfile(nextProfile);
-    void run(nextProfile, true);
-  }, [feedbackLoading, profile, run]);
-
   const addFeedback = useCallback(async (items: string[]) => {
-    if (!profile || feedbackLoading || items.length === 0) return;
+    if (!profile || !context || feedbackLoading || items.length === 0) return;
 
     setFeedbackLoading(true);
     const presentedIds = results.map((item) => item.product.id);
-    const nextProfile = {
-      ...profile,
-      feedback: [...profile.feedback, ...items],
-      refinement: "" as Refinement,
-    };
+    const nextProfile = { ...profile, feedback: [...profile.feedback, ...items], refinement: "" as Refinement };
+    const nextContext: QuickSuggestionContext = { ...context, excludeIds: presentedIds };
 
-    setProfile(nextProfile);
     track("feedback_submitted", {
       feedback: items,
       productIds: presentedIds,
       recommendationIds: presentedIds,
       source: "quick_suggestion",
-      quickSuggestion: profile.quickContext?.key,
+      quickSuggestion: context.key,
     });
 
     try {
-      await run(nextProfile, true);
+      await run(nextContext, nextProfile);
     } finally {
       setFeedbackLoading(false);
     }
-  }, [feedbackLoading, profile, results, run]);
+  }, [context, feedbackLoading, profile, results, run]);
 
-  return {
-    suggestion,
-    phase,
-    profile,
-    results,
-    feedbackLoading,
-    error,
-    start,
-    retry,
-    refine,
-    addFeedback,
-  };
+  return { suggestion, phase, profile, results, feedbackLoading, error, start, retry, addFeedback };
 }

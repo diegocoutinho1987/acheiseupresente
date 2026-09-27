@@ -2,6 +2,7 @@ import type { GiftProfile, Recommendation } from "@/types";
 import { getCatalog } from "@/services/catalogService";
 import { rankProducts } from "@/services/recommendationEngine";
 import { interpretGiftProfile, personalizeRecommendationExplanations, resolveGiftTaxonomies } from "@/services/giftAi.functions";
+import { getRecommendationSessionId } from "@/services/analytics";
 
 function fallbackExplanation(profile: GiftProfile, product: Recommendation["product"]): string {
   const description = product.description?.trim().split(/[.!?]/)[0]?.trim();

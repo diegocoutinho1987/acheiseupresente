@@ -128,7 +128,7 @@ function matchesGender(product: Product, gender: "male" | "female"): boolean {
     ...product.occasions,
   ].join(" "));
 
-  return GENDER_TERMS[gender].some((term) => new RegExp(`\\\\b${term}\\\\b`).test(text));
+  return GENDER_TERMS[gender].some((term) => text.split(/\\s+/).includes(term));
 }
 
 function selectResults(products: Product[], excludeIds: Set<string>): Product[] {

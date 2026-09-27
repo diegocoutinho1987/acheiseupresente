@@ -105,3 +105,15 @@ export async function deleteTaxonomyItems(kind: TaxonomyKind, ids: string[]): Pr
   }
   return { deleted: deletable, blocked };
 }
+
+export async function getActiveTaxonomyOptions(kind: TaxonomyKind): Promise<{ id: string; name: string }[]> {
+  if (kind === "categories") {
+    const { data, error } = await supabase.from("categories").select("id,name").eq("active", true).order("name");
+    if (error) throw error;
+    return data ?? [];
+  }
+  const table = kind === "occasions" ? "occasions" : "profiles";
+  const { data, error } = await supabase.from(table).select("id,name").eq("active", true).eq("questionnaire_visible", true).order("name");
+  if (error) throw error;
+  return data ?? [];
+}

@@ -10,9 +10,12 @@ export interface Product {
   affiliateUrl?: string;
   category: string;
   categories?: string[];
+  categoryIds?: string[];
   tags: string[];
   occasions: string[];
+  occasionIds?: string[];
   profiles: string[];
+  profileIds?: string[];
   active: boolean;
 }
 
@@ -42,18 +45,27 @@ export type Refinement =
 
 export interface GiftProfile {
   recipient: string;
+  recipientText: string;
+  recipientId: string | null;
   occasion: string;
+  occasionText: string;
+  occasionId: string | null;
   budget: string;
   description: string;
   avoid: string;
   refinement: Refinement;
   feedback: string[];
   structuredProfile?: StructuredGiftProfile | null;
+  taxonomyOptions?: { profiles: { id: string; name: string }[]; occasions: { id: string; name: string }[] };
 }
 
 export const emptyProfile: GiftProfile = {
   recipient: "",
+  recipientText: "",
+  recipientId: null,
   occasion: "",
+  occasionText: "",
+  occasionId: null,
   budget: "",
   description: "",
   avoid: "",

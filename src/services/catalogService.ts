@@ -11,6 +11,7 @@ export async function getCatalog(): Promise<Product[]> {
     price: Number(p.price),
     category: p.categoryNames[0] ?? p.category,
     categories: p.categoryNames.length ? p.categoryNames : [p.category],
+    categoryIds: p.categoryIds,
     store: p.store,
     url: p.affiliate_url || p.product_url,
     productUrl: p.product_url,
@@ -18,7 +19,9 @@ export async function getCatalog(): Promise<Product[]> {
     image: p.image_url ?? "",
     tags: p.tags ?? [],
     occasions: p.occasionNames,
+    occasionIds: p.occasionIds,
     profiles: p.profileNames,
+    profileIds: p.profileIds,
     active: p.active,
   }));
 }

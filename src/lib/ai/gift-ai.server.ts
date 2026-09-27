@@ -16,6 +16,8 @@ const profileSchema = z.object({
   avoid: z.array(z.string()),
 });
 
+const taxonomySchema = z.object({ profileId: z.string().nullable(), occasionId: z.string().nullable() });
+
 const explanationsSchema = z.object({
   explanations: z.array(z.object({
     productId: z.string(),
@@ -140,4 +142,10 @@ export async function personalizeExplanationsWithAi(
   return Object.fromEntries(output.explanations
     .filter((item) => validIds.has(item.productId) && item.explanation.trim())
     .map((item) => [item.productId, item.explanation.trim().slice(0, 320)]));
+}
+
+export async function resolveGiftTaxonomiesWithAi(apiKey: string, input: { recipient: string; occasion: string; profiles: { id: string; name: string }[]; occasions: { id: string; name: string }[] }): Promise<{ profileId: string | null; occasionId: string | null }> {
+  const result = streamText({ model: createProvider(apiKey), output: Output.object({ schema: taxonomySchema }), providerOptions, maxRetries: 0,
+    instructions: ["Associe as respostas exclusivamente aos registros fornecidos.", "Não crie, altere ou invente perfis ou ocasiões.", "Retorne somente IDs existentes nas listas.", "Se não houver correspondência clara, retorne null."].join(" "), prompt: JSON.stringify(input) });
+  try { return await result.output; } catch (error) { const parsed = parseGeneratedObject(error); const validated = taxonomySchema.safeParse(parsed); if (validated.success) return validated.data; throw error; }
 }

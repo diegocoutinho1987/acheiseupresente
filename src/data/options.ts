@@ -6,11 +6,10 @@ export const OCCASIONS = [
 ];
 
 export const BUDGETS: { label: string; min: number; max: number }[] = [
-  { label: "Até R$50", min: 0, max: 50 },
-  { label: "R$50 a R$100", min: 50, max: 100 },
-  { label: "R$100 a R$200", min: 100, max: 200 },
-  { label: "R$200 a R$500", min: 200, max: 500 },
-  { label: "Mais de R$500", min: 500, max: Infinity },
+  { label: "Até 50 Reais", min: 0, max: 50 },
+  { label: "Até 100 Reais", min: 0, max: 100 },
+  { label: "Até 200 Reais", min: 0, max: 200 },
+  { label: "Qualquer valor", min: 0, max: Infinity },
 ];
 
 export const REFINEMENTS = ["Mais barato", "Mais criativo", "Mais útil", "Mais pessoal", "Quero outras opções"] as const;

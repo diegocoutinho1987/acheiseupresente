@@ -4,7 +4,9 @@ import { structuredProfileTerms } from "@/services/giftProfileAi";
 
 export interface UserGiftProfile {
   recipient: string;
+  recipientId: string | null;
   occasion: string;
+  occasionId: string | null;
   budgetMin: number;
   budgetMax: number;
   description: string;
@@ -94,7 +96,9 @@ export function toUserGiftProfile(profile: GiftProfile): UserGiftProfile {
   const budget = BUDGETS.find((item) => item.label === profile.budget) ?? BUDGETS[2];
   return {
     recipient: profile.recipient,
+    recipientId: profile.recipientId,
     occasion: profile.occasion,
+    occasionId: profile.occasionId,
     budgetMin: budget?.min ?? 100,
     budgetMax: budget?.max ?? 200,
     description: profile.description,
@@ -158,11 +162,11 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
     reasons.push(`Combina com ${matchedInterests.slice(0, 3).join(", ")}, características identificadas no perfil.`);
   }
 
-  if (product.occasions.some((occasion) => sameConcept(occasion, profile.occasion))) {
+  if ((profile.occasionId && product.occasionIds?.includes(profile.occasionId)) || (!profile.occasionId && product.occasions.some((occasion) => sameConcept(occasion, profile.occasion)))) {
     score += 25;
     reasons.push(`Foi associado à ocasião ${profile.occasion.toLowerCase()}.`);
   }
-  if (matchesProfile(profile.recipient, product.profiles)) {
+  if ((profile.recipientId && product.profileIds?.includes(profile.recipientId)) || (!profile.recipientId && matchesProfile(profile.recipient, product.profiles))) {
     score += 20;
     reasons.push(`Foi cadastrado para o perfil ${profile.recipient.toLowerCase()}.`);
   }

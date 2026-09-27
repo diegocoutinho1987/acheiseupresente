@@ -8,6 +8,8 @@ const interpretInput = z.object({
   avoid: z.string(),
 });
 
+const taxonomyInput = z.object({ recipient: z.string(), occasion: z.string(), profiles: z.array(z.object({ id: z.string(), name: z.string() })), occasions: z.array(z.object({ id: z.string(), name: z.string() })) });
+
 const explanationsInput = z.object({
   profile: z.custom<GiftProfile>(),
   recommendations: z.custom<Recommendation[]>(),
@@ -20,6 +22,15 @@ export const interpretGiftProfile = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("A interpretação inteligente não está configurada.");
     const { interpretGiftTextWithAi } = await import("@/lib/ai/gift-ai.server");
     return interpretGiftTextWithAi(apiKey, data);
+  });
+
+export const resolveGiftTaxonomies = createServerFn({ method: "POST" })
+  .validator((data) => taxonomyInput.parse(data))
+  .handler(async ({ data }) => {
+    const apiKey = process.env["LOVABLE_API_KEY"]!;
+    if (!apiKey) throw new Error("A interpretação inteligente não está configurada.");
+    const { resolveGiftTaxonomiesWithAi } = await import("@/lib/ai/gift-ai.server");
+    return resolveGiftTaxonomiesWithAi(apiKey, data);
   });
 
 export const personalizeRecommendationExplanations = createServerFn({ method: "POST" })

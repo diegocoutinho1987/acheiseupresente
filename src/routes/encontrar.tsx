@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SearchX, RefreshCw, Pencil } from "lucide-react";
 import { SiteHeader } from "@/components/gift/SiteHeader";
@@ -14,10 +14,15 @@ import { SiteFooter } from "@/components/gift/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { BUDGETS } from "@/data/options";
 import { useGiftFlow, TOTAL_STEPS } from "@/hooks/useGiftFlow";
+import { useQuickGiftFlow } from "@/hooks/useQuickGiftFlow";
+import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
 import { registerProductClick, track, type AnalyticsEvent } from "@/services/analytics";
 import { getActiveTaxonomyOptions } from "@/services/taxonomyService";
 
 export const Route = createFileRoute("/encontrar")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    quick: typeof search.quick === "string" ? getQuickSuggestion(search.quick)?.key : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Encontrar presente — Achei Seu Presente!" },
@@ -32,11 +37,20 @@ export const Route = createFileRoute("/encontrar")({
 });
 
 function FinderPage() {
+  const search = Route.useSearch();
   const flow = useGiftFlow();
+  const quickFlow = useQuickGiftFlow(search.quick as QuickSuggestionKey | undefined);
   const { profile, update, step, setStep, phase } = flow;
   const [taxonomiesReady, setTaxonomiesReady] = useState(false);
 
-  useEffect(() => { track("generator_started"); Promise.all([getActiveTaxonomyOptions("profiles"), getActiveTaxonomyOptions("occasions")]).then(([profiles, occasions]) => { update({ taxonomyOptions: { profiles, occasions } }); setTaxonomiesReady(true); }).catch(() => setTaxonomiesReady(true)); }, [update]);
+  useEffect(() => {
+    if (search.quick) {
+      void quickFlow.start();
+      return;
+    }
+    track("generator_started");
+    Promise.all([getActiveTaxonomyOptions("profiles"), getActiveTaxonomyOptions("occasions")]).then(([profiles, occasions]) => { update({ taxonomyOptions: { profiles, occasions } }); setTaxonomiesReady(true); }).catch(() => setTaxonomiesReady(true));
+  }, [quickFlow.start, search.quick, update]);
 
   const choose = (key: "recipient" | "occasion" | "budget", value: string, event: AnalyticsEvent) => {
     update({ [key]: value });
@@ -135,6 +149,47 @@ function FinderPage() {
             <div className="mt-10"><FeedbackOptions key={flow.results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} isLoading={flow.feedbackLoading} /></div>
           </div>
         )}
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
+
+function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }) {
+  const { suggestion, phase, profile, results, feedbackLoading, error } = flow;
+
+  return (
+    <div className="min-h-screen">
+      <SiteHeader />
+      <main className="mx-auto max-w-6xl px-5 pb-20">
+        {phase === "loading" && <LoadingScreen message="Buscando outras opções..." />}
+        {phase === "error" && (
+          <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><SearchX className="h-6 w-6 text-muted-foreground" /></span>
+            <h1 className="mt-6 text-2xl text-foreground">Não foi possível encontrar sugestões.</h1>
+            <p className="mt-2 max-w-sm text-muted-foreground">Tente novamente ou escolha outra sugestão rápida.</p>
+            <Button asChild className="mt-8 rounded-full"><Link to="/">Voltar para o início</Link></Button>
+          </div>
+        )}
+        {phase === "results" && suggestion && profile && (
+          <div className="fade-up">
+            <div className="mx-auto mb-10 mt-4 max-w-2xl text-center">
+              <h1 className="text-3xl sm:text-4xl text-foreground">{suggestion.resultTitle}</h1>
+              <p className="mt-3 text-muted-foreground">Confira algumas ideias que podem combinar com a ocasião.</p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                {suggestion.label} · <Link to="/" className="font-medium text-foreground underline underline-offset-4">outra busca</Link>
+              </p>
+            </div>
+            <RecommendationList items={results} onProductClick={(r) => { void registerProductClick(r.product.id, "recommendation"); }} />
+            <section className="mx-auto mt-14 max-w-2xl rounded-2xl border bg-card p-6 text-center sm:p-8">
+              <h2 className="text-xl text-foreground">Não encontrou exatamente o que queria?</h2>
+              <div className="mt-5"><RefinementButtons active={profile.refinement} onSelect={flow.refine} /></div>
+            </section>
+            <div className="mt-10"><FeedbackOptions key={results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} isLoading={feedbackLoading} /></div>
+          </div>
+        )}
+        {phase === "idle" && !error && <LoadingScreen message="Preparando suas sugestões..." />}
       </main>
       <SiteFooter />
     </div>

@@ -116,7 +116,20 @@ export async function getRecommendations(
   }
 
   const catalog = await getCatalog();
-  const recommendations = rankProducts(catalog, profile, previousIds, limit);
+  const sessionId = getRecommendationSessionId();
+  const recommendations = rankProducts(catalog, profile, previousIds, limit, sessionId);
+
+  if (import.meta.env.DEV) {
+    console.info("[RECOMMENDATION] pool input", {
+      eligibleProducts: catalog.filter((product) => product.active).length,
+      previousIds: previousIds.length,
+      limit,
+      sessionId,
+      selectedIds: recommendations.map((item) => item.product.id),
+      scores: recommendations.map((item) => ({ id: item.product.id, score: item.score })),
+      categories: recommendations.map((item) => item.product.category),
+    });
+  }
 
   try {
     const explanations = await withTimeout(

@@ -29,6 +29,13 @@
       "when": 1790397672467,
       "tag": "0003_add_affiliate_links_and_click_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790473785792,
+      "tag": "0004_centralize_product_taxonomies",
+      "breakpoints": true
     }
   ]
 }

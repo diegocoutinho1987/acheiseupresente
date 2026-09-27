@@ -33,7 +33,9 @@ const FORBIDDEN_EXPLANATION_PATTERNS = [
   "orçamento", "foi associado", "foi associada", "foi associado(a)",
   "sem ligação direta com os interesses informados", "perfil", "com base no perfil",
   "de acordo com o perfil", "seu perfil", "interesses informados", "correspondência",
-  "corresponde", "algoritmo", "analisamos", "identificamos",
+  "corresponde", "algoritmo", "analisamos", "identificamos", "score", "matching", "tags",
+  "banco de dados", "análise de dados", "sistema", "recomendação automática", "inteligência artificial", "ia",
+  "critérios", "pontuação",
 ];
 
 function validExplanation(value: string): boolean {

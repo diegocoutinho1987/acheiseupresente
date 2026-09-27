@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SearchX, RefreshCw, Pencil } from "lucide-react";
 import { SiteHeader } from "@/components/gift/SiteHeader";
 import { ProgressBar } from "@/components/gift/ProgressBar";
@@ -11,9 +11,10 @@ import { RecommendationList } from "@/components/gift/RecommendationList";
 import { RefinementButtons } from "@/components/gift/RefinementButtons";
 import { FeedbackOptions } from "@/components/gift/FeedbackOptions";
 import { Button } from "@/components/ui/button";
-import { RECIPIENTS, OCCASIONS, BUDGETS } from "@/data/options";
+import { BUDGETS } from "@/data/options";
 import { useGiftFlow, TOTAL_STEPS } from "@/hooks/useGiftFlow";
 import { registerProductClick, track, type AnalyticsEvent } from "@/services/analytics";
+import { getActiveTaxonomyNames } from "@/services/taxonomyService";
 
 export const Route = createFileRoute("/encontrar")({
   head: () => ({
@@ -32,8 +33,10 @@ export const Route = createFileRoute("/encontrar")({
 function FinderPage() {
   const flow = useGiftFlow();
   const { profile, update, step, setStep, phase } = flow;
+  const [recipients, setRecipients] = useState<string[] | null>(null);
+  const [occasions, setOccasions] = useState<string[] | null>(null);
 
-  useEffect(() => { track("generator_started"); }, []);
+  useEffect(() => { track("generator_started"); Promise.all([getActiveTaxonomyNames("profiles"), getActiveTaxonomyNames("occasions")]).then(([profileNames, occasionNames]) => { setRecipients([...profileNames.filter((name) => name !== "Outra pessoa"), "Outra pessoa"]); setOccasions(occasionNames); }).catch(() => { setRecipients(["Outra pessoa"]); setOccasions([]); }); }, []);
 
   const choose = (key: "recipient" | "occasion" | "budget", value: string, event: AnalyticsEvent) => {
     update({ [key]: value });
@@ -47,21 +50,22 @@ function FinderPage() {
     <div className="min-h-screen">
       <SiteHeader />
       <main className={`mx-auto px-5 pb-20 ${phase === "results" ? "max-w-6xl" : "max-w-xl"}`}>
-        {phase === "questions" && (
+        {phase === "questions" && (!recipients || !occasions) && <div className="py-20 text-center text-sm text-muted-foreground">Carregando opções…</div>}
+        {phase === "questions" && recipients && occasions && (
           <>
             <div className="mb-8 mt-2"><ProgressBar step={step} total={TOTAL_STEPS} /></div>
             <div key={step}>
               {step === 1 && (
                 <QuestionCard title="Para quem é o presente?" onNext={next} canNext={!!profile.recipient}>
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                    {RECIPIENTS.map((r) => <OptionButton key={r} label={r} selected={profile.recipient === r} onClick={() => choose("recipient", r, "recipient_selected")} />)}
+                    {recipients.map((r) => <OptionButton key={r} label={r} selected={profile.recipient === r} onClick={() => choose("recipient", r, "recipient_selected")} />)}
                   </div>
                 </QuestionCard>
               )}
               {step === 2 && (
                 <QuestionCard title="Qual é a ocasião?" onBack={back} onNext={next} canNext={!!profile.occasion}>
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                    {OCCASIONS.map((o) => <OptionButton key={o} label={o} selected={profile.occasion === o} onClick={() => choose("occasion", o, "occasion_selected")} />)}
+                    {occasions.map((o) => <OptionButton key={o} label={o} selected={profile.occasion === o} onClick={() => choose("occasion", o, "occasion_selected")} />)}
                   </div>
                 </QuestionCard>
               )}

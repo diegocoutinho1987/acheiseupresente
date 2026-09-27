@@ -9,6 +9,7 @@ import type { Product } from "@/types";
 import { getCatalog } from "@/services/catalogService";
 import { formatPrice } from "@/utils/format";
 import { track } from "@/services/analytics";
+import { QUICK_SUGGESTIONS } from "@/data/quickSuggestions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,6 +43,7 @@ function Home() {
   const [catalog, setCatalog] = useState<Product[]>([]);
   useEffect(() => {
     track("home_view");
+    track("quick_suggestion_viewed", { count: QUICK_SUGGESTIONS.length });
     getCatalog().then(setCatalog).catch(() => setCatalog([]));
   }, []);
   const examples = EXAMPLES.flatMap((example) => {
@@ -75,6 +77,8 @@ function Home() {
             ))}
           </div>
         </section>
+
+<section className="mx-auto max-w-5xl px-5 py-14 sm:py-16"><div className="mx-auto max-w-2xl text-center"><h2 className="text-2xl text-foreground sm:text-3xl">Ou encontre uma ideia rápida</h2><p className="mt-2 text-muted-foreground">Escolha uma opção e veja algumas sugestões.</p></div><div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{QUICK_SUGGESTIONS.map((suggestion) => (<Link key={suggestion.key} to="/encontrar" search={{ quick: suggestion.key }} className="flex min-h-20 items-center justify-center rounded-2xl border bg-card px-3 py-3 text-center text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{suggestion.label}</Link>))}</div></section>
 
         <section className="border-y bg-muted/50">
           <div className="mx-auto max-w-5xl px-5 py-16">

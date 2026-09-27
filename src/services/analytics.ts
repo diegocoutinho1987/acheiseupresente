@@ -12,7 +12,10 @@ export type AnalyticsEvent =
   | "refinement_clicked"
   | "recommendation_refined"
   | "refinement_completed"
-  | "feedback_submitted";
+  | "feedback_submitted"
+  | "quick_suggestion_viewed"
+  | "quick_suggestion_clicked"
+  | "quick_recommendation_generated";
 
 export type ClickSource = "recommendation" | "refinement";
 

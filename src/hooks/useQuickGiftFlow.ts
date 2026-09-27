@@ -50,7 +50,7 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
       occasionText: "",
       occasionId: occasionOption?.id ?? null,
       budget: "Qualquer valor",
-      description: "",
+      description: suggestion.label,
       avoid: "",
       refinement: "" as Refinement,
       feedback: [],

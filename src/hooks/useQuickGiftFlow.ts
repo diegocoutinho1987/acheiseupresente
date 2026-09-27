@@ -6,6 +6,7 @@ import { track } from "@/services/analytics";
 import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
 
 const QUICK_LIMIT = 6;
+const QUICK_TIMEOUT_MS = 15000;
 
 function normalize(value: string): string {
   return value
@@ -15,6 +16,18 @@ function normalize(value: string): string {
     .replace(/\(a\)/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function taxonomyMatches(left: string, right: string): boolean {
+  const normalizeWords = (value: string) =>
+    normalize(value)
+      .split(" ")
+      .filter((word) => !["da", "das", "do", "dos", "de"].includes(word))
+      .map((word) => (word.length > 5 && word.endsWith("s") ? word.slice(0, -1) : word));
+
+  const a = normalizeWords(left);
+  const b = normalizeWords(right);
+  return a.length === b.length && a.every((word, index) => word === b[index]);
 }
 
 const EMPTY_STRUCTURED_PROFILE = {
@@ -77,9 +90,14 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
-      const result = await Promise.race([\n        getRecommendations(nextProfile, seen.current, QUICK_LIMIT, {
-        explanationTimeoutMs: 8000,
-      });
+      const result = await Promise.race([
+        getRecommendations(nextProfile, seen.current, QUICK_LIMIT, {
+          explanationTimeoutMs: 8000,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Quick recommendation timeout")), QUICK_TIMEOUT_MS),
+        ),
+      ]);
 
       if (result.recommendations.length === 0) {
         setError("empty");
@@ -102,7 +120,7 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
         stage: isRefinement ? "refinement" : "initial",
       });
     } catch {
-      setError(true);
+      setError("load");
       setPhase("error");
     }
   }, []);
@@ -117,14 +135,14 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     });
     seen.current = [];
     setPhase("loading");
-    setError(false);
+    setError(null);
 
     try {
       const nextProfile = await buildProfile();
       setProfile(nextProfile);
       await run(nextProfile, false);
     } catch {
-      setError(true);
+      setError("load");
       setPhase("error");
     }
   }, [buildProfile, run, suggestion]);

@@ -6,7 +6,7 @@ import { interpretGiftProfile, personalizeRecommendationExplanations, resolveGif
 function fallbackExplanation(profile: GiftProfile, product: Recommendation["product"]): string {
   const category = product.category?.trim();
   if (category) return `Pode ser uma boa escolha para quem gosta de ${category.toLowerCase()}.`;
-  if (profile.occasion?.trim()) return `Pode ser uma boa opção para essa ocasião.`;
+  if (profile.occasion?.trim()) return "Pode ser uma boa opção para essa ocasião.";
   return "Pode ser uma boa opção para presentear.";
 }
 
@@ -28,42 +28,99 @@ export interface RecommendationResult {
   profile: GiftProfile;
 }
 
-export async function getRecommendations(input: GiftProfile, previousIds: string[] = [], limit = 3, options: RecommendationOptions = {}): Promise<RecommendationResult> {
+export interface RecommendationOptions {
+  explanationTimeoutMs?: number;
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs?: number): Promise<T> {
+  if (!timeoutMs || timeoutMs <= 0) return promise;
+
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Recommendation explanation timeout")), timeoutMs),
+    ),
+  ]);
+}
+
+export async function getRecommendations(
+  input: GiftProfile,
+  previousIds: string[] = [],
+  limit = 3,
+  options: RecommendationOptions = {},
+): Promise<RecommendationResult> {
   let profile = input;
+
   if (input.taxonomyOptions) {
     try {
-      const resolved = await resolveGiftTaxonomies({ data: { recipient: input.recipientText || input.recipient, occasion: input.occasionText || input.occasion, profiles: input.taxonomyOptions.profiles, occasions: input.taxonomyOptions.occasions } });
+      const resolved = await resolveGiftTaxonomies({
+        data: {
+          recipient: input.recipientText || input.recipient,
+          occasion: input.occasionText || input.occasion,
+          profiles: input.taxonomyOptions.profiles,
+          occasions: input.taxonomyOptions.occasions,
+        },
+      });
+
       const fallbackProfile = input.taxonomyOptions.profiles.find((item) => item.name === "Outra pessoa");
       const fallbackOccasion = input.taxonomyOptions.occasions.find((item) => /sem ocasião específica/i.test(item.name));
       const profileOption = input.taxonomyOptions.profiles.find((item) => item.id === resolved.profileId) ?? fallbackProfile;
       const occasionOption = input.taxonomyOptions.occasions.find((item) => item.id === resolved.occasionId) ?? fallbackOccasion;
-      profile = { ...profile, recipient: profileOption?.name ?? input.recipient, recipientId: profileOption?.id ?? null, occasion: occasionOption?.name ?? input.occasion, occasionId: occasionOption?.id ?? null };
-    } catch { profile = { ...input, recipientId: null, occasionId: null }; }
+
+      profile = {
+        ...profile,
+        recipient: profileOption?.name ?? input.recipient,
+        recipientId: profileOption?.id ?? null,
+        occasion: occasionOption?.name ?? input.occasion,
+        occasionId: occasionOption?.id ?? null,
+      };
+    } catch {
+      profile = { ...input, recipientId: null, occasionId: null };
+    }
   }
+
   if (!input.structuredProfile) {
     try {
-      const structuredProfile = await interpretGiftProfile({ data: {
-        recipient: profile.recipient,
-        description: profile.description,
-        avoid: profile.avoid,
-      } });
+      const structuredProfile = await interpretGiftProfile({
+        data: {
+          recipient: profile.recipient,
+          description: profile.description,
+          avoid: profile.avoid,
+        },
+      });
       profile = { ...profile, structuredProfile };
     } catch {
       profile = { ...input, structuredProfile: null };
     }
   }
+
   const catalog = await getCatalog();
   const recommendations = rankProducts(catalog, profile, previousIds, limit);
+
   try {
-    const explanations = await withTimeout(\n      personalizeRecommendationExplanations({ data: { profile, recommendations } }),\n      options.explanationTimeoutMs,\n    );
+    const explanations = await withTimeout(
+      personalizeRecommendationExplanations({ data: { profile, recommendations } }),
+      options.explanationTimeoutMs,
+    );
+
     return {
       profile,
       recommendations: recommendations.map((item) => ({
         ...item,
-        explanation: validExplanation(explanations[item.product.id] ?? "") ? explanations[item.product.id].trim() : fallbackExplanation(profile, item.product),
+        explanation: validExplanation(explanations[item.product.id] ?? "")
+          ? explanations[item.product.id].trim()
+          : fallbackExplanation(profile, item.product),
       })),
     };
   } catch {
-    return { profile, recommendations: recommendations.map((item) => ({ ...item, explanation: validExplanation(item.explanation) ? item.explanation : fallbackExplanation(profile, item.product) })) };
+    return {
+      profile,
+      recommendations: recommendations.map((item) => ({
+        ...item,
+        explanation: validExplanation(item.explanation)
+          ? item.explanation
+          : fallbackExplanation(profile, item.product),
+      })),
+    };
   }
 }

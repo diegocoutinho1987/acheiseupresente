@@ -14,6 +14,7 @@ export function useGiftFlow() {
   const [phase, setPhase] = useState<Phase>("questions");
   const [results, setResults] = useState<Recommendation[]>([]);
   const [error, setError] = useState<GiftFlowError>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
   const seen = useRef<string[]>([]);
 
   const update = useCallback((patch: Partial<GiftProfile>) => setProfile((p) => ({ ...p, ...patch })), []);
@@ -54,13 +55,22 @@ export function useGiftFlow() {
     run(p, true);
   }, [profile, run]);
 
-  const addFeedback = useCallback((items: string[]) => {
-    setProfile((p) => ({ ...p, feedback: [...p.feedback, ...items] }));
-    track("feedback_submitted", { feedback: items });
-  }, []);
+  const addFeedback = useCallback(async (items: string[]) => {
+    if (feedbackLoading || items.length === 0) return;
+    setFeedbackLoading(true);
+    const presentedIds = results.map((r) => r.product.id);
+    const p = { ...profile, feedback: [...profile.feedback, ...items] };
+    setProfile(p);
+    track("feedback_submitted", { feedback: items, productIds: presentedIds, recommendationIds: presentedIds, refinement: profile.refinement });
+    try {
+      await run(p, true);
+    } finally {
+      setFeedbackLoading(false);
+    }
+  }, [feedbackLoading, profile, results, run]);
 
   const retry = useCallback(() => run(profile, profile.refinement !== ""), [profile, run]);
   const editAnswers = useCallback(() => { setStep(1); setPhase("questions"); }, []);
 
-  return { profile, update, step, setStep, phase, error, results, submit, refine, addFeedback, retry, editAnswers };
+  return { profile, update, step, setStep, phase, error, results, submit, refine, addFeedback, feedbackLoading, retry, editAnswers };
 }

@@ -43,6 +43,13 @@
       "when": 1790474393283,
       "tag": "0005_preserve_questionnaire_choices",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790474608858,
+      "tag": "0006_fix_product_taxonomy_save",
+      "breakpoints": true
     }
   ]
 }

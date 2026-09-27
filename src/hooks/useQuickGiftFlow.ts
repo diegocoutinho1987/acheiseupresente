@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GiftProfile, Recommendation, Refinement } from "@/types";
 import { track } from "@/services/analytics";
 import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
-import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext, type QuickSuggestionDiagnostic } from "@/services/quickSuggestionService";
+import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext, QuickSuggestionUserError } from "@/services/quickSuggestionService";
 
 const EMPTY_STRUCTURED_PROFILE = { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] };
 
@@ -31,7 +31,6 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
   const [results, setResults] = useState<Recommendation[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [error, setError] = useState<"load" | "empty" | null>(null);
-  const [diagnostic, setDiagnostic] = useState<QuickSuggestionDiagnostic | null>(null);
   const [context, setContext] = useState<QuickSuggestionContext | null>(null);
   const started = useRef(false);
   const currentKey = useRef<QuickSuggestionKey | undefined>(key);
@@ -45,31 +44,15 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     setResults([]);
     setContext(null);
     setError(null);
-    setDiagnostic(null);
   }, [key]);
 
   const run = useCallback(async (nextContext: QuickSuggestionContext, nextProfile: GiftProfile) => {
     setPhase("loading");
     setError(null);
-    setDiagnostic({
-      stage: "received_context",
-      context: nextContext.type,
-      id: nextContext.type === "profile" ? nextContext.profileId : nextContext.type === "occasion" ? nextContext.occasionId : undefined,
-      message: "Contexto recebido. Iniciando consulta.",
-    });
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
       const recommendations = await getQuickSuggestions(nextContext);
-      setDiagnostic({
-        stage: "render_results",
-        context: nextContext.type,
-        id: nextContext.type === "profile" ? nextContext.profileId : nextContext.type === "occasion" ? nextContext.occasionId : undefined,
-        table: "products",
-        query: "renderizar recomendações retornadas",
-        message: "Nenhum erro técnico foi lançado pela função de sugestões rápidas.",
-      });
-
       if (recommendations.length === 0) {
         setPhase("error");
         setError("empty");
@@ -89,20 +72,9 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
         stage: nextProfile.feedback.length ? "feedback" : "initial",
       });
     } catch (error) {
-      const quickError = error as { diagnostic?: QuickSuggestionDiagnostic; message?: string };
-      const nextDiagnostic = quickError.diagnostic ?? {
-        stage: "prepare_results" as const,
-        context: nextContext.type,
-        id: nextContext.type === "profile" ? nextContext.profileId : nextContext.type === "occasion" ? nextContext.occasionId : undefined,
-        message: quickError.message ?? String(error),
-        code: typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") || undefined : undefined,
-        details: typeof error === "object" && error && "details" in error ? String((error as { details?: unknown }).details ?? "") || undefined : undefined,
-        hint: typeof error === "object" && error && "hint" in error ? String((error as { hint?: unknown }).hint ?? "") || undefined : undefined,
-      };
-      console.error("[quick-suggestions] Diagnóstico da falha", { key: nextContext.key, diagnostic: nextDiagnostic, error });
-      setDiagnostic(nextDiagnostic);
+      console.error("[quick-suggestions] Falha ao carregar sugestões rápidas", error);
       setPhase("error");
-      setError("load");
+      setError(error instanceof QuickSuggestionUserError ? "load" : "load");
     }
   }, []);
 
@@ -126,17 +98,7 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
       setProfile(nextProfile);
       await run(nextContext, nextProfile);
     } catch (error) {
-      const quickError = error as { diagnostic?: QuickSuggestionDiagnostic; message?: string };
-      const nextDiagnostic = quickError.diagnostic ?? {
-        stage: "resolve_profile_or_occasion" as const,
-        context: suggestion.type,
-        message: quickError.message ?? String(error),
-        code: typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") || undefined : undefined,
-        details: typeof error === "object" && error && "details" in error ? String((error as { details?: unknown }).details ?? "") || undefined : undefined,
-        hint: typeof error === "object" && error && "hint" in error ? String((error as { hint?: unknown }).hint ?? "") || undefined : undefined,
-      };
-      console.error("[quick-suggestions] Diagnóstico da falha ao preparar contexto", { key: suggestion.key, diagnostic: nextDiagnostic, error });
-      setDiagnostic(nextDiagnostic);
+      console.error("[quick-suggestions] Falha ao resolver contexto", error);
       setPhase("error");
       setError("load");
     }
@@ -171,5 +133,5 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     }
   }, [context, feedbackLoading, profile, results, run]);
 
-  return { suggestion, phase, profile, results, feedbackLoading, error, diagnostic, start, retry, addFeedback };
+  return { suggestion, phase, profile, results, feedbackLoading, error, start, retry, addFeedback };
 }

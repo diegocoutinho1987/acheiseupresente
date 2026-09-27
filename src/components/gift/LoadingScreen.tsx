@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Gift } from "lucide-react";
 import { LOADING_MESSAGES } from "@/data/options";
 
-export function LoadingScreen() {
+export function LoadingScreen({ message }: { message?: string }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((x) => Math.min(x + 1, LOADING_MESSAGES.length - 1)), 900);
@@ -15,7 +15,7 @@ export function LoadingScreen() {
         <span className="absolute inset-2 rounded-full bg-secondary" />
         <Gift className="relative h-8 w-8 animate-pulse text-primary" />
       </div>
-      <p key={i} className="fade-up mt-8 text-lg font-medium text-foreground">{LOADING_MESSAGES[i]}</p>
+      <p key={message ?? i} className="fade-up mt-8 text-lg font-medium text-foreground">{message ?? LOADING_MESSAGES[i]}</p>
       <div className="mt-4 flex gap-1.5">
         {LOADING_MESSAGES.map((_, k) => (
           <span key={k} className={`h-1.5 w-6 rounded-full transition-colors duration-500 ${k <= i ? "bg-primary" : "bg-muted"}`} />

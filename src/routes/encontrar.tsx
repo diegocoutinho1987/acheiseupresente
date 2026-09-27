@@ -167,9 +167,14 @@ function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }
         {phase === "error" && (
           <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><SearchX className="h-6 w-6 text-muted-foreground" /></span>
-            <h1 className="mt-6 text-2xl text-foreground">Não foi possível encontrar sugestões.</h1>
-            <p className="mt-2 max-w-sm text-muted-foreground">Tente novamente ou escolha outra sugestão rápida.</p>
-            <Button asChild className="mt-8 rounded-full"><Link to="/">Voltar para o início</Link></Button>
+            <h1 className="mt-6 text-2xl text-foreground">{error === "empty" ? "Não encontramos sugestões para essa busca." : "Não conseguimos encontrar sugestões agora."}</h1>
+            <p className="mt-2 max-w-sm text-muted-foreground">
+              {error === "empty" ? "Tente outra sugestão rápida ou faça uma busca personalizada." : "Pode ter acontecido uma falha temporária. Tente novamente."}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>
+              <Button asChild variant="outline" className="rounded-full"><Link to="/">Voltar para o início</Link></Button>
+            </div>
           </div>
         )}
         {phase === "results" && suggestion && profile && (

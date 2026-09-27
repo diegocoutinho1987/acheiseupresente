@@ -103,10 +103,14 @@ export async function personalizeExplanationsWithAi(
     providerOptions,
     maxRetries: 0,
     instructions: [
-      "Escreva uma explicação curta em português do Brasil para cada recomendação.",
-      "Use exclusivamente o perfil informado, os motivos calculados e os dados reais do produto recebidos.",
-      "Não invente atributos, benefícios, preços, links ou preferências.",
-      "Mantenha exatamente cada productId recebido e retorne uma frase objetiva por produto.",
+      "Escreva uma justificativa curta e natural em português do Brasil para cada recomendação.",
+      "O texto deve ter no máximo 130 caracteres.",
+      "Escreva como uma sugestão entre amigos, simples, informal e humanizada.",
+      "Fale diretamente sobre a pessoa e o presente, transmitindo a ideia de que ela pode gostar daquilo.",
+      "Use exclusivamente os dados reais recebidos e não invente atributos, benefícios, preços, links ou preferências.",
+      "Não explique o processo de seleção e não use linguagem técnica ou corporativa.",
+      "Nunca use: orçamento, foi associado, foi associada, foi associado(a), sem ligação direta com os interesses informados, perfil, com base no perfil, de acordo com o perfil, seu perfil, interesses informados, correspondência, corresponde, algoritmo, analisamos ou identificamos.",
+      "Mantenha exatamente cada productId recebido e retorne uma frase por produto.",
     ].join(" "),
     prompt: JSON.stringify({
       profile: {
@@ -122,7 +126,10 @@ export async function personalizeExplanationsWithAi(
         description: product.description,
         price: product.price,
         category: product.category,
+        categories: product.categories,
         tags: product.tags,
+        occasions: product.occasions,
+        profiles: product.profiles,
         reasons,
       })),
     }),
@@ -141,7 +148,7 @@ export async function personalizeExplanationsWithAi(
   const validIds = new Set(recommendations.map((item) => item.product.id));
   return Object.fromEntries(output.explanations
     .filter((item) => validIds.has(item.productId) && item.explanation.trim())
-    .map((item) => [item.productId, item.explanation.trim().slice(0, 320)]));
+    .map((item) => [item.productId, item.explanation.trim()]));
 }
 
 export async function resolveGiftTaxonomiesWithAi(apiKey: string, input: { recipient: string; occasion: string; profiles: { id: string; name: string }[]; occasions: { id: string; name: string }[] }): Promise<{ profileId: string | null; occasionId: string | null }> {

@@ -109,7 +109,7 @@ export function toUserGiftProfile(profile: GiftProfile): UserGiftProfile {
 export function matchesAvoidTerms(product: Product, avoidText: string): boolean {
   if (!avoidText.trim()) return false;
   const avoidInterests = extractInterests(avoidText);
-  const searchable = [product.name, product.description, ...product.categories, ...product.tags].map(normalize);
+  const searchable = [product.name, product.description, ...(product.categories ?? [product.category]), ...product.tags].map(normalize);
   if (avoidInterests.some((term) => searchable.some((value) => sameConcept(term, value)))) return true;
   const avoidWords = words(avoidText);
   return avoidWords.some((term) => searchable.some((value) => words(value).includes(term)));
@@ -138,7 +138,7 @@ function previousSimilarity(product: Product, previousProducts: Product[]): numb
   const tags = new Set(product.tags.map(normalize));
   return previousProducts.reduce((highest, previous) => {
     const overlap = previous.tags.filter((tag) => tags.has(normalize(tag))).length;
-    const sharedCategory = product.categories.some((category) => previous.categories.some((previousCategory) => sameConcept(category, previousCategory)));
+    const sharedCategory = (product.categories ?? [product.category]).some((category) => (previous.categories ?? [previous.category]).some((previousCategory) => sameConcept(category, previousCategory)));
     return Math.max(highest, overlap + (sharedCategory ? 2 : 0));
   }, 0);
 }
@@ -166,7 +166,7 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
     score += 20;
     reasons.push(`Foi cadastrado para o perfil ${profile.recipient.toLowerCase()}.`);
   }
-  const matchedCategory = product.categories.find((category) => interests.some((interest) => sameConcept(interest, category)));
+  const matchedCategory = (product.categories ?? [product.category]).find((category) => interests.some((interest) => sameConcept(interest, category)));
   if (matchedCategory) {
     score += 10;
     reasons.push(`A categoria ${matchedCategory} corresponde ao perfil descrito.`);

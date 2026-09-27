@@ -47,7 +47,9 @@ export async function getAllTaxonomies() {
 }
 
 export async function getActiveTaxonomyNames(kind: TaxonomyKind): Promise<string[]> {
-  const { data, error } = await supabase.from(kind).select("name").eq("active", true).order("name");
+  let query = supabase.from(kind).select("name").eq("active", true);
+  if (kind !== "categories") query = query.eq("questionnaire_visible", true);
+  const { data, error } = await query.order("name");
   if (error) throw error;
   return (data ?? []).map((item) => item.name);
 }

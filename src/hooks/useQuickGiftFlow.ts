@@ -31,7 +31,7 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
   const [profile, setProfile] = useState<GiftProfile | null>(null);
   const [results, setResults] = useState<Recommendation[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"load" | "empty" | null>(null);
   const seen = useRef<string[]>([]);
   const started = useRef(false);
 
@@ -44,10 +44,10 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     ]);
 
     const profileOption = suggestion.profileName
-      ? profiles.find((item) => normalize(item.name) === normalize(suggestion.profileName))
+      ? profiles.find((item) => taxonomyMatches(item.name, suggestion.profileName))
       : undefined;
     const occasionOption = suggestion.occasionName
-      ? occasions.find((item) => normalize(item.name) === normalize(suggestion.occasionName))
+      ? occasions.find((item) => taxonomyMatches(item.name, suggestion.occasionName))
       : undefined;
 
     return {
@@ -73,16 +73,16 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
 
   const run = useCallback(async (nextProfile: GiftProfile, isRefinement: boolean) => {
     setPhase("loading");
-    setError(false);
+    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
-      const result = await getRecommendations(nextProfile, seen.current, QUICK_LIMIT, {
+      const result = await Promise.race([\n        getRecommendations(nextProfile, seen.current, QUICK_LIMIT, {
         explanationTimeoutMs: 8000,
       });
 
       if (result.recommendations.length === 0) {
-        setError(true);
+        setError("empty");
         setPhase("error");
         return;
       }

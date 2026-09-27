@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Menu, Package, Plus, X } from "lucide-react";
+import { LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ const navigation = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { to: "/admin/products", label: "Produtos", icon: Package },
   { to: "/admin/products/new", label: "Adicionar produto", icon: Plus },
+  { to: "/admin/taxonomies", label: "Cadastros", icon: ListTree },
 ] as const;
 
 export function AdminShell() {

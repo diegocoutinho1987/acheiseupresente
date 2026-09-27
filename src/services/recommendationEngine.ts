@@ -109,7 +109,7 @@ export function toUserGiftProfile(profile: GiftProfile): UserGiftProfile {
 export function matchesAvoidTerms(product: Product, avoidText: string): boolean {
   if (!avoidText.trim()) return false;
   const avoidInterests = extractInterests(avoidText);
-  const searchable = [product.name, product.description, product.category, ...product.tags].map(normalize);
+  const searchable = [product.name, product.description, ...product.categories, ...product.tags].map(normalize);
   if (avoidInterests.some((term) => searchable.some((value) => sameConcept(term, value)))) return true;
   const avoidWords = words(avoidText);
   return avoidWords.some((term) => searchable.some((value) => words(value).includes(term)));
@@ -138,7 +138,8 @@ function previousSimilarity(product: Product, previousProducts: Product[]): numb
   const tags = new Set(product.tags.map(normalize));
   return previousProducts.reduce((highest, previous) => {
     const overlap = previous.tags.filter((tag) => tags.has(normalize(tag))).length;
-    return Math.max(highest, overlap + (normalize(previous.category) === normalize(product.category) ? 2 : 0));
+    const sharedCategory = product.categories.some((category) => previous.categories.some((previousCategory) => sameConcept(category, previousCategory)));
+    return Math.max(highest, overlap + (sharedCategory ? 2 : 0));
   }, 0);
 }
 
@@ -165,9 +166,10 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
     score += 20;
     reasons.push(`Foi cadastrado para o perfil ${profile.recipient.toLowerCase()}.`);
   }
-  if (interests.some((interest) => sameConcept(interest, product.category))) {
+  const matchedCategory = product.categories.find((category) => interests.some((interest) => sameConcept(interest, category)));
+  if (matchedCategory) {
     score += 10;
-    reasons.push(`A categoria ${product.category} corresponde ao perfil descrito.`);
+    reasons.push(`A categoria ${matchedCategory} corresponde ao perfil descrito.`);
   }
 
   const price = priceScore(product.price, profile.budgetMin, profile.budgetMax);

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { AdminProduct, ProductPayload } from "@/services/productService";
+import { TaxonomyMultiSelect } from "@/components/admin/TaxonomyMultiSelect";
+import { getAllTaxonomies, type TaxonomyItem } from "@/services/taxonomyService";
 
 type ProductFormProps = {
   product?: AdminProduct;
@@ -17,10 +19,10 @@ type ProductFormProps = {
 
 type FormState = {
   name: string; description: string; price: string; store: string; productUrl: string; affiliateUrl: string;
-  imageUrl: string; category: string; tags: string; occasions: string; profiles: string; active: boolean;
+  imageUrl: string; tags: string; categoryIds: string[]; occasionIds: string[]; profileIds: string[]; active: boolean;
 };
 
-const emptyForm: FormState = { name: "", description: "", price: "", store: "", productUrl: "", affiliateUrl: "", imageUrl: "", category: "", tags: "", occasions: "", profiles: "", active: true };
+const emptyForm: FormState = { name: "", description: "", price: "", store: "", productUrl: "", affiliateUrl: "", imageUrl: "", tags: "", categoryIds: [], occasionIds: [], profileIds: [], active: true };
 
 function list(value: string) {
   return [...new Set(value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))];
@@ -34,10 +36,13 @@ function isValidUrl(value: string, optional = false) {
 export function ProductForm({ product, submitting, onSubmit, onCancel }: ProductFormProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [taxonomies, setTaxonomies] = useState<{ categories: TaxonomyItem[]; occasions: TaxonomyItem[]; profiles: TaxonomyItem[] }>({ categories: [], occasions: [], profiles: [] });
+
+  useEffect(() => { getAllTaxonomies().then(setTaxonomies).catch(() => setErrors((current) => ({ ...current, categoryIds: "Não foi possível carregar os cadastros." }))); }, []);
 
   useEffect(() => {
     if (!product) return;
-    setForm({ name: product.name, description: product.description, price: String(product.price), store: product.store, productUrl: product.product_url, affiliateUrl: product.affiliate_url, imageUrl: product.image_url ?? "", category: product.category, tags: product.tags.join(", "), occasions: product.occasions.join(", "), profiles: product.profiles.join(", "), active: product.active });
+    setForm({ name: product.name, description: product.description, price: String(product.price), store: product.store, productUrl: product.product_url, affiliateUrl: product.affiliate_url, imageUrl: product.image_url ?? "", tags: product.tags.join(", "), categoryIds: product.categoryIds, occasionIds: product.occasionIds, profileIds: product.profileIds, active: product.active });
   }, [product]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -52,7 +57,7 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
     if (!form.name.trim()) nextErrors.name = "Informe o nome do produto.";
     if (!(price > 0)) nextErrors.price = "Informe um preço maior que zero.";
     if (!form.store.trim()) nextErrors.store = "Informe a loja.";
-    if (!form.category.trim()) nextErrors.category = "Informe a categoria.";
+    if (!form.categoryIds.length) nextErrors.categoryIds = "Selecione ao menos uma categoria.";
     if (!form.productUrl.trim()) nextErrors.productUrl = "Informe o link do produto.";
     else if (!isValidUrl(form.productUrl.trim())) nextErrors.productUrl = "Use um endereço válido começando com http:// ou https://.";
     if (!isValidUrl(form.affiliateUrl.trim(), true)) nextErrors.affiliateUrl = "Use um endereço válido começando com http:// ou https://.";
@@ -61,8 +66,8 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
 
     await onSubmit({
       name: form.name.trim(), description: form.description.trim(), price, store: form.store.trim(),
-      product_url: form.productUrl.trim(), affiliate_url: form.affiliateUrl.trim(), image_url: form.imageUrl.trim() || null, category: form.category.trim(),
-      tags: list(form.tags), occasions: list(form.occasions), profiles: list(form.profiles), active: form.active,
+      product_url: form.productUrl.trim(), affiliate_url: form.affiliateUrl.trim(), image_url: form.imageUrl.trim() || null,
+      tags: list(form.tags), categoryIds: form.categoryIds, occasionIds: form.occasionIds, profileIds: form.profileIds, active: form.active,
     });
   }
 
@@ -74,7 +79,7 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
           <Field id="name" label="Nome do produto" required error={errors.name}><Input id="name" value={form.name} onChange={(event) => set("name", event.target.value)} aria-invalid={!!errors.name} /></Field>
           <Field id="price" label="Preço" required error={errors.price}><div className="relative"><span className="absolute left-3 top-2 text-sm text-muted-foreground">R$</span><Input id="price" className="pl-10" inputMode="decimal" value={form.price} onChange={(event) => set("price", event.target.value)} aria-invalid={!!errors.price} /></div></Field>
           <Field id="store" label="Loja" required error={errors.store}><Input id="store" value={form.store} onChange={(event) => set("store", event.target.value)} aria-invalid={!!errors.store} /></Field>
-          <Field id="category" label="Categoria" required error={errors.category}><Input id="category" value={form.category} onChange={(event) => set("category", event.target.value)} aria-invalid={!!errors.category} /></Field>
+          <TaxonomyMultiSelect label="Categorias" required items={taxonomies.categories} selected={form.categoryIds} onChange={(value) => set("categoryIds", value)} error={errors.categoryIds} />
           <Field id="description" label="Descrição" className="sm:col-span-2"><Textarea id="description" rows={4} value={form.description} onChange={(event) => set("description", event.target.value)} /></Field>
         </div>
       </section>
@@ -93,11 +98,11 @@ export function ProductForm({ product, submitting, onSubmit, onCancel }: Product
 
       <section className="rounded-md border bg-card p-5 sm:p-6">
         <h2 className="text-lg font-semibold">Classificação para recomendações</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Separe os termos por vírgula. Você pode criar novos termos livremente.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Associe os cadastros existentes ao produto. Tags continuam livres.</p>
         <div className="mt-5 space-y-5">
           <Field id="tags" label="Tags" hint="Ex.: tecnologia, café, prático"><Input id="tags" value={form.tags} onChange={(event) => set("tags", event.target.value)} /></Field>
-          <Field id="occasions" label="Ocasiões" hint="Ex.: aniversário, natal, casamento"><Input id="occasions" value={form.occasions} onChange={(event) => set("occasions", event.target.value)} /></Field>
-          <Field id="profiles" label="Perfis" hint="Ex.: mãe, amigo, colega"><Input id="profiles" value={form.profiles} onChange={(event) => set("profiles", event.target.value)} /></Field>
+          <TaxonomyMultiSelect label="Ocasiões" items={taxonomies.occasions} selected={form.occasionIds} onChange={(value) => set("occasionIds", value)} />
+          <TaxonomyMultiSelect label="Perfis" items={taxonomies.profiles} selected={form.profileIds} onChange={(value) => set("profileIds", value)} />
         </div>
       </section>
 

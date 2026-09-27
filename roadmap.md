@@ -21,10 +21,10 @@
 - [x] Adicionar seleção e exclusão em massa de produtos no painel
 - [x] Padronizar imagens de produtos sem cortes em todas as telas
 ## Evolução estrutural dos cadastros
-- [ ] Inspecionar taxonomias e associações atuais
-- [ ] Criar cadastros centrais e relações seguras com produtos
-- [ ] Migrar todas as associações existentes sem perdas
-- [ ] Adaptar serviços, formulário e administração
-- [ ] Alimentar questionário com perfis e ocasiões ativos
-- [ ] Adaptar o motor para múltiplas categorias
+- [x] Inspecionar taxonomias e associações atuais
+- [x] Criar cadastros centrais e relações seguras com produtos
+- [x] Migrar todas as associações existentes sem perdas
+- [x] Adaptar serviços, formulário e administração
+- [x] Alimentar questionário com perfis e ocasiões ativos
+- [x] Adaptar o motor para múltiplas categorias
 - [ ] Validar CRUD, recomendações, dados e responsividade

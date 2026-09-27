@@ -9,6 +9,7 @@ export interface Product {
   productUrl?: string;
   affiliateUrl?: string;
   category: string;
+  categories: string[];
   tags: string[];
   occasions: string[];
   profiles: string[];

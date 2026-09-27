@@ -28,7 +28,7 @@ export interface RecommendationResult {
   profile: GiftProfile;
 }
 
-export async function getRecommendations(input: GiftProfile, previousIds: string[] = []): Promise<RecommendationResult> {
+export async function getRecommendations(input: GiftProfile, previousIds: string[] = [], limit = 3): Promise<RecommendationResult> {
   let profile = input;
   if (input.taxonomyOptions) {
     try {
@@ -53,7 +53,7 @@ export async function getRecommendations(input: GiftProfile, previousIds: string
     }
   }
   const catalog = await getCatalog();
-  const recommendations = rankProducts(catalog, profile, previousIds);
+  const recommendations = rankProducts(catalog, profile, previousIds, limit);
   try {
     const explanations = await personalizeRecommendationExplanations({ data: { profile, recommendations } });
     return {

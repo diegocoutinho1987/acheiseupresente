@@ -176,7 +176,7 @@ function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }
           <div className="fade-up">
             <div className="mx-auto mb-10 mt-4 max-w-2xl text-center">
               <h1 className="text-3xl sm:text-4xl text-foreground">{suggestion.resultTitle}</h1>
-              <p className="mt-3 text-muted-foreground">Confira algumas ideias que podem combinar com a ocasião.</p>
+              <p className="mt-3 text-muted-foreground">{suggestion.occasionName ? "Confira algumas ideias que podem combinar com a ocasião." : "Confira algumas ideias que podem combinar com essa busca."}</p>
               <p className="mt-4 text-sm text-muted-foreground">
                 {suggestion.label} · <Link to="/" className="font-medium text-foreground underline underline-offset-4">outra busca</Link>
               </p>

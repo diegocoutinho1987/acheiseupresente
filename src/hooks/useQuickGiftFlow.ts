@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GiftProfile, Recommendation, Refinement } from "@/types";
 import { track } from "@/services/analytics";
 import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
-import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext } from "@/services/quickSuggestionService";
+import {
+  createQuickSuggestionContext,
+  getQuickSuggestions,
+  type QuickSuggestionContext,
+} from "@/services/quickSuggestionService";
 
 const EMPTY_STRUCTURED_PROFILE = { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] };
 
@@ -10,10 +14,10 @@ function buildProfile(context: QuickSuggestionContext): GiftProfile {
   return {
     recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
     recipientText: "",
-    recipientId: context.type === "profile" ? context.profileId : null,
+    recipientId: context.type === "profile" ? null : null,
     occasion: context.type === "occasion" ? context.occasionName : "",
     occasionText: "",
-    occasionId: context.type === "occasion" ? context.occasionId : null,
+    occasionId: null,
     budget: "Qualquer valor",
     description: context.label,
     avoid: "",
@@ -53,7 +57,11 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
 
     try {
       const recommendations = await getQuickSuggestions(nextContext);
+
       if (recommendations.length === 0) {
+        setContext(nextContext);
+        setProfile(nextProfile);
+        setResults([]);
         setPhase("error");
         setError("empty");
         return;
@@ -75,6 +83,8 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
       console.error("[quick-suggestions] Falha ao carregar sugestões rápidas", error);
       setPhase("error");
       setError("load");
+    } finally {
+      setPhase((currentPhase) => (currentPhase === "loading" ? "error" : currentPhase));
     }
   }, []);
 
@@ -85,22 +95,19 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     track("quick_suggestion_clicked", { key: suggestion.key, label: suggestion.label });
     setPhase("loading");
     setError(null);
-    setDiagnostic({
-      stage: "received_context",
-      context: suggestion.type,
-      message: "Sugestão recebida antes da resolução do contexto.",
-    });
 
     try {
-      const nextContext = await resolveQuickSuggestionContext(suggestion);
+      const nextContext = createQuickSuggestionContext(suggestion);
       const nextProfile = buildProfile(nextContext);
       setContext(nextContext);
       setProfile(nextProfile);
       await run(nextContext, nextProfile);
     } catch (error) {
-      console.error("[quick-suggestions] Falha ao resolver contexto", error);
+      console.error("[quick-suggestions] Falha ao iniciar sugestão rápida", error);
       setPhase("error");
       setError("load");
+    } finally {
+      setPhase((currentPhase) => (currentPhase === "loading" ? "error" : currentPhase));
     }
   }, [run, suggestion]);
 

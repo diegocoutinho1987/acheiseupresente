@@ -33,7 +33,6 @@ function toProduct(product: AdminProduct): Product {
     category: product.categoryNames[0] ?? product.category,
     categories: product.categoryNames.length ? product.categoryNames : [product.category],
     categoryIds: product.categoryIds,
-    store: product.store,
     tags: product.tags ?? [],
     occasions: product.occasionNames,
     occasionIds: product.occasionIds,

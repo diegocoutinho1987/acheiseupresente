@@ -10,6 +10,7 @@ import { LoadingScreen } from "@/components/gift/LoadingScreen";
 import { RecommendationList } from "@/components/gift/RecommendationList";
 import { RefinementButtons } from "@/components/gift/RefinementButtons";
 import { FeedbackOptions } from "@/components/gift/FeedbackOptions";
+import { SiteFooter } from "@/components/gift/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { BUDGETS } from "@/data/options";
 import { useGiftFlow, TOTAL_STEPS } from "@/hooks/useGiftFlow";
@@ -20,9 +21,9 @@ export const Route = createFileRoute("/encontrar")({
   head: () => ({
     meta: [
       { title: "Encontrar presente — Achei Seu Presente!" },
-      { name: "description", content: "Responda 5 perguntas rápidas e receba 5 ideias de presente com a explicação de cada escolha." },
+      { name: "description", content: "Responda 5 perguntas rápidas e receba 3 ideias de presente com a explicação de cada escolha." },
       { property: "og:title", content: "Encontrar presente — Achei Seu Presente!" },
-      { property: "og:description", content: "Responda 5 perguntas rápidas e receba 5 ideias de presente com a explicação de cada escolha." },
+      { property: "og:description", content: "Responda 5 perguntas rápidas e receba 3 ideias de presente com a explicação de cada escolha." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -118,8 +119,8 @@ function FinderPage() {
         {phase === "results" && (
           <div className="fade-up">
             <div className="mx-auto mb-10 mt-4 max-w-2xl text-center">
-              <h1 className="text-3xl sm:text-4xl text-foreground">{flow.results.length === 1 ? "Encontramos 1 opção que combina com seu perfil." : `Encontramos ${flow.results.length} opções que combinam com seu perfil.`}</h1>
-              <p className="mt-3 text-muted-foreground">Selecionamos opções pensando no perfil que você descreveu.</p>
+              <h1 className="text-3xl sm:text-4xl text-foreground">Encontramos 3 ideias para você</h1>
+              <p className="mt-3 text-muted-foreground">Veja algumas opções que podem combinar com a pessoa que você quer presentear.</p>
               <p className="mt-4 text-sm text-muted-foreground">
                 {profile.recipient} · {profile.occasion} · {profile.budget}
                 {profile.refinement && <> · <span className="font-medium text-primary">{profile.refinement}</span></>}
@@ -131,10 +132,11 @@ function FinderPage() {
               <h2 className="text-xl text-foreground">Não encontrou exatamente o que queria?</h2>
               <div className="mt-5"><RefinementButtons active={profile.refinement} onSelect={flow.refine} /></div>
             </section>
-            <div className="mt-10"><FeedbackOptions key={flow.results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} /></div>
+            <div className="mt-10"><FeedbackOptions key={flow.results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} isLoading={flow.feedbackLoading} /></div>
           </div>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }

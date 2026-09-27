@@ -11,7 +11,7 @@ type Props = {
   selected: string[];
   onChange: (ids: string[]) => void;
   required?: boolean;
-  error?: string;
+  error?: string | undefined;
 };
 
 export function TaxonomyMultiSelect({ label, items, selected, onChange, required, error }: Props) {

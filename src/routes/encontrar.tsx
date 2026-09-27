@@ -102,7 +102,7 @@ function FinderPage() {
           </>
         )}
 
-        {phase === "loading" && <LoadingScreen />}
+        {phase === "loading" && <LoadingScreen message={flow.feedbackLoading ? "Vamos tentar outras ideias para você..." : undefined} />}
 
         {phase === "error" && (
           <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">

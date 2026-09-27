@@ -163,38 +163,41 @@ function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-5 pb-20">
-        {phase === "loading" && <LoadingScreen message="Buscando outras opções..." />}
+        {phase === "loading" && <LoadingScreen message="Buscando sugestões..." />}
+
         {phase === "error" && (
           <div className="fade-up flex min-h-[60vh] flex-col items-center justify-center text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><SearchX className="h-6 w-6 text-muted-foreground" /></span>
-            <h1 className="mt-6 text-2xl text-foreground">{error === "empty" ? "Não encontramos sugestões para essa busca." : "Não conseguimos encontrar sugestões agora."}</h1>
+            <h1 className="mt-6 text-2xl text-foreground">
+              {error === "empty" ? "Não encontramos sugestões para essa opção ainda." : "Não conseguimos carregar essas sugestões agora."}
+            </h1>
             <p className="mt-2 max-w-sm text-muted-foreground">
-              {error === "empty" ? "Tente outra sugestão rápida ou faça uma busca personalizada." : "Pode ter acontecido uma falha temporária. Tente novamente."}
+              {error === "empty" ? "Tente outra sugestão ou volte para a página inicial." : "Pode ter acontecido uma falha temporária. Tente novamente."}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>
-              <Button asChild variant="outline" className="rounded-full"><Link to="/">Voltar para o início</Link></Button>
+              {error === "load" && <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>}
+              <Button asChild variant="outline" className="rounded-full"><Link to="/">Voltar</Link></Button>
             </div>
           </div>
         )}
+
         {phase === "results" && suggestion && profile && (
           <div className="fade-up">
             <div className="mx-auto mb-10 mt-4 max-w-2xl text-center">
-              <h1 className="text-3xl sm:text-4xl text-foreground">{suggestion.resultTitle}</h1>
-              <p className="mt-3 text-muted-foreground">{suggestion.occasionName ? "Confira algumas ideias que podem combinar com a ocasião." : "Confira algumas ideias que podem combinar com essa busca."}</p>
+              <h1 className="text-3xl text-foreground sm:text-4xl">{suggestion.resultTitle}</h1>
+              <p className="mt-3 text-muted-foreground">Confira algumas ideias que podem combinar com essa busca.</p>
               <p className="mt-4 text-sm text-muted-foreground">
                 {suggestion.label} · <Link to="/" className="font-medium text-foreground underline underline-offset-4">outra busca</Link>
               </p>
             </div>
+
             <RecommendationList items={results} onProductClick={(r) => { void registerProductClick(r.product.id, "recommendation"); }} />
-            <section className="mx-auto mt-14 max-w-2xl rounded-2xl border bg-card p-6 text-center sm:p-8">
-              <h2 className="text-xl text-foreground">Não encontrou exatamente o que queria?</h2>
-              <div className="mt-5"><RefinementButtons active={profile.refinement} onSelect={flow.refine} /></div>
-            </section>
-            <div className="mt-10"><FeedbackOptions key={results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} isLoading={feedbackLoading} /></div>
+
+            <div className="mt-10">
+              <FeedbackOptions key={results.map((r) => r.product.id).join()} onSubmit={flow.addFeedback} isLoading={feedbackLoading} />
+            </div>
           </div>
         )}
-        {phase === "idle" && !error && <LoadingScreen message="Preparando suas sugestões..." />}
       </main>
       <SiteFooter />
     </div>

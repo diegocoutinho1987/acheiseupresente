@@ -22,6 +22,10 @@ export type ClickSource = "recommendation" | "refinement";
 const SESSION_KEY = "gift-session-id";
 let sessionReady: Promise<string | null> | null = null;
 
+export function getRecommendationSessionId(): string | null {
+  return getSessionId();
+}
+
 function getSessionId(): string | null {
   if (typeof window === "undefined") return null;
   const current = window.sessionStorage.getItem(SESSION_KEY);

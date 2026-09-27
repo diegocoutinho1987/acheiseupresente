@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GiftProfile, Recommendation, Refinement } from "@/types";
 import { track } from "@/services/analytics";
 import { getQuickSuggestion, type QuickSuggestionKey } from "@/data/quickSuggestions";
-import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext, QuickSuggestionUserError } from "@/services/quickSuggestionService";
+import { getQuickSuggestions, resolveQuickSuggestionContext, type QuickSuggestionContext } from "@/services/quickSuggestionService";
 
 const EMPTY_STRUCTURED_PROFILE = { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] };
 
@@ -74,7 +74,7 @@ export function useQuickGiftFlow(key: QuickSuggestionKey | undefined) {
     } catch (error) {
       console.error("[quick-suggestions] Falha ao carregar sugestões rápidas", error);
       setPhase("error");
-      setError(error instanceof QuickSuggestionUserError ? "load" : "load");
+      setError("load");
     }
   }, []);
 

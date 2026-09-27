@@ -27,6 +27,36 @@ export async function getActiveProducts(): Promise<AdminProduct[]> {
   return (data ?? []).map((row) => adaptProduct(row as unknown as ProductWithLinks));
 }
 
+export async function getActiveProductsByProfile(profileId: string): Promise<AdminProduct[]> {
+  if (!profileId.trim()) throw new Error("profileId inválido");
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, product_categories(categories(id,name,active)), product_occasions(occasions(id,name,active)), product_profiles!inner(profile_id, profiles(id,name,active))")
+    .eq("active", true)
+    .eq("product_profiles.profile_id", profileId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[quick-suggestions] Falha na consulta de produtos por perfil", { profileId, error });
+    throw error;
+  }
+  return (data ?? []).map((row) => adaptProduct(row as unknown as ProductWithLinks));
+}
+
+export async function getActiveProductsByOccasion(occasionId: string): Promise<AdminProduct[]> {
+  if (!occasionId.trim()) throw new Error("occasionId inválido");
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, product_categories(categories(id,name,active)), product_occasions!inner(occasion_id, occasions(id,name,active)), product_profiles(profiles(id,name,active))")
+    .eq("active", true)
+    .eq("product_occasions.occasion_id", occasionId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[quick-suggestions] Falha na consulta de produtos por ocasião", { occasionId, error });
+    throw error;
+  }
+  return (data ?? []).map((row) => adaptProduct(row as unknown as ProductWithLinks));
+}
+
 export async function getProduct(id: string): Promise<AdminProduct | null> {
   const { data, error } = await supabase.from("products").select(productSelect).eq("id", id).maybeSingle();
   if (error) throw error;

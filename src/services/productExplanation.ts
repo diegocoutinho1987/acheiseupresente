@@ -80,7 +80,10 @@ function buildSpecificFallback(product: Product, profile: GiftProfile): string {
     return `Uma ideia de ${noun} para presentear ${profile.recipient.trim().toLowerCase()}.`;
   }
 
-  return `Uma opção de ${noun} ligada ao contexto desta busca.`;
+  const detail = product.description.split(/[.!?]/)[0].trim();
+  if (detail) return shorten(`Uma opção de ${noun} que ${detail.charAt(0).toLowerCase() + detail.slice(1)}.`);
+
+  return `Uma opção de ${noun} para essa busca.`;
 }
 
 export function buildProductExplanation(

@@ -4,10 +4,29 @@ import { rankProducts } from "@/services/recommendationEngine";
 import { interpretGiftProfile, personalizeRecommendationExplanations, resolveGiftTaxonomies } from "@/services/giftAi.functions";
 
 function fallbackExplanation(profile: GiftProfile, product: Recommendation["product"]): string {
-  const category = product.category?.trim();
-  if (category) return `Pode ser uma boa escolha para quem gosta de ${category.toLowerCase()}.`;
-  if (profile.occasion?.trim()) return "Pode ser uma boa opção para essa ocasião.";
-  return "Pode ser uma boa opção para presentear.";
+  const description = product.description?.trim().split(/[.!?]/)[0]?.trim();
+  const occasion = profile.occasion?.trim();
+  const recipient = profile.recipient?.trim();
+  const noun = product.category?.trim().toLowerCase() || product.name.trim();
+
+  if (occasion && description) {
+    return shortenFallback(`Eu consideraria este ${noun} para ${occasion.toLowerCase()} porque ${description.toLowerCase()}.`);
+  }
+  if (recipient && description) {
+    return shortenFallback(`Eu consideraria este ${noun} para ${recipient.toLowerCase()} porque ${description.toLowerCase()}.`);
+  }
+  if (description) {
+    return shortenFallback(`Eu consideraria este presente porque ${description.toLowerCase()}.`);
+  }
+  return `Eu consideraria este presente pelo que ele oferece no contexto desta busca.`;
+}
+
+function shortenFallback(value: string): string {
+  const text = value.trim();
+  if (text.length <= 130) return text;
+  const words = text.slice(0, 127).trimEnd().split(/\s+/);
+  words.pop();
+  return `${words.join(" ")}...`;
 }
 
 const FORBIDDEN_EXPLANATION_PATTERNS = [

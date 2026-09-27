@@ -159,7 +159,7 @@ function FinderPage() {
 
 
 function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }) {
-  const { suggestion, phase, profile, results, feedbackLoading, error } = flow;
+  const { suggestion, phase, profile, results, feedbackLoading, error, diagnostic } = flow;
 
   return (
     <div className="min-h-screen">
@@ -176,6 +176,22 @@ function QuickFinderPage({ flow }: { flow: ReturnType<typeof useQuickGiftFlow> }
             <p className="mt-2 max-w-sm text-muted-foreground">
               {error === "empty" ? "Tente outra sugestão ou volte para a página inicial." : "Pode ter acontecido uma falha temporária. Tente novamente."}
             </p>
+            {error === "load" && diagnostic && (
+              <div className="mt-8 w-full max-w-3xl rounded-2xl border border-destructive/30 bg-card p-5 text-left shadow-sm">
+                <h2 className="text-lg font-semibold text-foreground">Erro técnico da sugestão rápida</h2>
+                <dl className="mt-4 grid gap-3 text-sm">
+                  <div><dt className="font-medium text-muted-foreground">Etapa</dt><dd className="mt-1 break-words text-foreground">{diagnostic.stage || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Tipo</dt><dd className="mt-1 break-words text-foreground">{diagnostic.context || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">ID</dt><dd className="mt-1 break-all font-mono text-foreground">{diagnostic.id || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Tabela</dt><dd className="mt-1 break-words font-mono text-foreground">{diagnostic.table || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Consulta</dt><dd className="mt-1 break-words font-mono text-foreground">{diagnostic.query || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Mensagem</dt><dd className="mt-1 break-words font-mono text-foreground">{diagnostic.message || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Código</dt><dd className="mt-1 break-words font-mono text-foreground">{diagnostic.code || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Detalhes</dt><dd className="mt-1 whitespace-pre-wrap break-words font-mono text-foreground">{diagnostic.details || "não informado"}</dd></div>
+                  <div><dt className="font-medium text-muted-foreground">Hint</dt><dd className="mt-1 whitespace-pre-wrap break-words font-mono text-foreground">{diagnostic.hint || "não informado"}</dd></div>
+                </dl>
+              </div>
+            )}
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {error === "load" && <Button className="rounded-full" onClick={flow.retry}><RefreshCw className="h-4 w-4" /> Tentar novamente</Button>}
               <Button asChild variant="outline" className="rounded-full"><Link to="/">Voltar</Link></Button>

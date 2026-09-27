@@ -209,33 +209,94 @@ export function calculateProductScore(product: Product, profile: UserGiftProfile
   return { product, score, reasons };
 }
 
-function diversify(items: ScoredProduct[], stronger: boolean, limit: number): ScoredProduct[] {
-  const remaining = [...items];
-  const selected: ScoredProduct[] = [];
-  const categoryCounts = new Map<string, number>();
-  const penalty = stronger ? 18 : 8;
-  const categoriesFor = (product: Product) => [...new Set((product.categories?.length ? product.categories : [product.category]).map(normalize))];
-  while (remaining.length && selected.length < limit) {
-    remaining.sort((a, b) => {
-      const repeatsA = Math.max(0, ...categoriesFor(a.product).map((category) => categoryCounts.get(category) ?? 0));
-      const repeatsB = Math.max(0, ...categoriesFor(b.product).map((category) => categoryCounts.get(category) ?? 0));
-      const adjustedA = a.score - repeatsA * penalty;
-      const adjustedB = b.score - repeatsB * penalty;
-      return adjustedB - adjustedA || b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR");
-    });
-    const next = remaining.shift();
-    if (!next) break;
-    selected.push(next);
-    categoriesFor(next.product).forEach((category) => categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1));
+function hashSeed(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
   }
-  return selected;
+  return hash >>> 0;
 }
 
+function variationBonus(productId: string, seed: string): number {
+  return (hashSeed(`${seed}:${productId}`) % 251) / 100;
+}
+
+function productCategories(product: Product): string[] {
+  return [...new Set((product.categories?.length ? product.categories : [product.category]).map(normalize).filter(Boolean))];
+}
+
+function productTags(product: Product): string[] {
+  return [...new Set(product.tags.map(normalize).filter(Boolean))];
+}
+
+function productWords(product: Product): string[] {
+  return [...new Set(words(`${product.name} ${product.description}`))];
+}
+
+function similarityPenalty(product: Product, selected: ScoredProduct): number {
+  const sharedCategories = productCategories(product).filter((category) => productCategories(selected.product).some((other) => sameConcept(category, other))).length;
+  const sharedTags = productTags(product).filter((tag) => productTags(selected.product).some((other) => sameConcept(tag, other))).length;
+  const sharedWords = productWords(product).filter((word) => productWords(selected.product).includes(word)).length;
+
+  return Math.min(24, sharedCategories * 12 + Math.min(sharedTags, 3) * 3 + Math.min(sharedWords, 4));
+}
+
+function diversify(items: ScoredProduct[], stronger: boolean, limit: number, seed: string): ScoredProduct[] {
+  if (items.length <= limit) return [...items].sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"));
+
+  const ranked = [...items].sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"));
+  const topScore = ranked[0]?.score ?? 0;
+  const poolSize = Math.min(items.length, Math.max(limit * 2, Math.ceil(items.length * 0.6)));
+  const scoreFloor = topScore - Math.max(12, Math.abs(topScore) * 0.12);
+  const pool = ranked.filter((item) => item.score >= scoreFloor).slice(0, poolSize);
+  const candidates = pool.length >= limit ? pool : ranked.slice(0, poolSize);
+
+  const selected: ScoredProduct[] = [];
+  const categoryCounts = new Map<string, number>();
+  const similarityStrength = stronger ? 1.25 : 1;
+
+  while (candidates.length && selected.length < limit) {
+    let bestIndex = 0;
+    let bestAdjusted = Number.NEGATIVE_INFINITY;
+
+    candidates.forEach((candidate, index) => {
+      const repeatedCategories = Math.max(0, ...productCategories(candidate.product).map((category) => categoryCounts.get(category) ?? 0));
+      const categoryPenalty = repeatedCategories * (stronger ? 14 : 10);
+      const similarToSelected = selected.reduce((highest, previous) => Math.max(highest, similarityPenalty(candidate.product, previous)), 0);
+      const adjusted = candidate.score
+        - categoryPenalty
+        - similarToSelected * similarityStrength
+        + variationBonus(candidate.product.id, seed);
+
+      if (
+        adjusted > bestAdjusted ||
+        (adjusted === bestAdjusted && candidate.score > candidates[bestIndex].score) ||
+        (adjusted === bestAdjusted && candidate.product.id < candidates[bestIndex].product.id)
+      ) {
+        bestAdjusted = adjusted;
+        bestIndex = index;
+      }
+    });
+
+    const [next] = candidates.splice(bestIndex, 1);
+    selected.push(next);
+    productCategories(next.product).forEach((category) => categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1));
+  }
+
+  return selected;
+}
 function explanation(reasons: string[]): string {
   return reasons.join(" ");
 }
 
-export function rankProducts(products: Product[], giftProfile: GiftProfile, previousIds: string[] = [], limit = 3): Recommendation[] {
+export function rankProducts(
+  products: Product[],
+  giftProfile: GiftProfile,
+  previousIds: string[] = [],
+  limit = 3,
+  sessionId: string | null = null,
+): Recommendation[] {
   const profile = toUserGiftProfile(giftProfile);
   const previous = new Set(previousIds);
   const previousProducts = products.filter((product) => previous.has(product.id));
@@ -249,8 +310,23 @@ export function rankProducts(products: Product[], giftProfile: GiftProfile, prev
     ? unseen
     : scored.map((item) => ({ ...item, score: item.score - (previous.has(item.product.id) ? 3 : 0) }));
   const strongerDiversity = profile.feedback.includes("Muito comum") || profile.feedback.includes("Quero algo diferente");
+  const contextSeed = [
+    sessionId ?? "no-session",
+    profile.recipient,
+    profile.recipientId ?? "",
+    profile.occasion,
+    profile.occasionId ?? "",
+    profile.budgetMin,
+    profile.budgetMax,
+    profile.description,
+    profile.avoid,
+    profile.refinement,
+    ...profile.feedback,
+    ...profile.interpretedTerms,
+    ...profile.quickTerms,
+  ].join("|");
 
-  return diversify(candidates, strongerDiversity, limit).map((item) => ({
+  return diversify(candidates, strongerDiversity, limit, contextSeed).map((item) => ({
     product: item.product,
     score: item.score,
     reasons: item.reasons,

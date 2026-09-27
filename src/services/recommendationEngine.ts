@@ -201,17 +201,19 @@ function diversify(items: ScoredProduct[], stronger: boolean): ScoredProduct[] {
   const selected: ScoredProduct[] = [];
   const categoryCounts = new Map<string, number>();
   const penalty = stronger ? 18 : 8;
+  const categoriesFor = (product: Product) => [...new Set((product.categories?.length ? product.categories : [product.category]).map(normalize))];
   while (remaining.length && selected.length < 5) {
     remaining.sort((a, b) => {
-      const adjustedA = a.score - (categoryCounts.get(normalize(a.product.category)) ?? 0) * penalty;
-      const adjustedB = b.score - (categoryCounts.get(normalize(b.product.category)) ?? 0) * penalty;
+      const repeatsA = Math.max(0, ...categoriesFor(a.product).map((category) => categoryCounts.get(category) ?? 0));
+      const repeatsB = Math.max(0, ...categoriesFor(b.product).map((category) => categoryCounts.get(category) ?? 0));
+      const adjustedA = a.score - repeatsA * penalty;
+      const adjustedB = b.score - repeatsB * penalty;
       return adjustedB - adjustedA || b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR");
     });
     const next = remaining.shift();
     if (!next) break;
     selected.push(next);
-    const category = normalize(next.product.category);
-    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+    categoriesFor(next.product).forEach((category) => categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1));
   }
   return selected;
 }

@@ -27,4 +27,4 @@
 - [x] Adaptar serviços, formulário e administração
 - [x] Alimentar questionário com perfis e ocasiões ativos
 - [x] Adaptar o motor para múltiplas categorias
-- [ ] Validar CRUD, recomendações, dados e responsividade
+- [x] Validar CRUD, recomendações, dados e responsividade

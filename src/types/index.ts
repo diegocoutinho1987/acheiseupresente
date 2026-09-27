@@ -57,6 +57,7 @@ export interface GiftProfile {
   feedback: string[];
   structuredProfile?: StructuredGiftProfile | null;
   taxonomyOptions?: { profiles: { id: string; name: string }[]; occasions: { id: string; name: string }[] };
+  quickContext?: { key: string; label: string; terms: string[] };
 }
 
 export const emptyProfile: GiftProfile = {

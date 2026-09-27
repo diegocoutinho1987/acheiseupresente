@@ -29,31 +29,49 @@ export async function getActiveProducts(): Promise<AdminProduct[]> {
 
 export async function getActiveProductsByProfile(profileId: string): Promise<AdminProduct[]> {
   if (!profileId.trim()) throw new Error("profileId inválido");
+
+  const { data: links, error: linksError } = await supabase
+    .from("product_profiles")
+    .select("product_id")
+    .eq("profile_id", profileId);
+
+  if (linksError) throw linksError;
+
+  const productIds = [...new Set((links ?? []).map((link) => link.product_id))];
+  if (!productIds.length) return [];
+
   const { data, error } = await supabase
     .from("products")
-    .select("*, product_categories(categories(id,name,active)), product_occasions(occasions(id,name,active)), product_profiles!inner(profile_id, profiles(id,name,active))")
+    .select(productSelect)
+    .in("id", productIds)
     .eq("active", true)
-    .eq("product_profiles.profile_id", profileId)
     .order("created_at", { ascending: false });
-  if (error) {
-    console.error("[quick-suggestions] Falha na consulta de produtos por perfil", { profileId, error });
-    throw error;
-  }
+
+  if (error) throw error;
   return (data ?? []).map((row) => adaptProduct(row as unknown as ProductWithLinks));
 }
 
 export async function getActiveProductsByOccasion(occasionId: string): Promise<AdminProduct[]> {
   if (!occasionId.trim()) throw new Error("occasionId inválido");
+
+  const { data: links, error: linksError } = await supabase
+    .from("product_occasions")
+    .select("product_id")
+    .eq("occasion_id", occasionId);
+
+  if (linksError) throw linksError;
+
+  const productIds = [...new Set((links ?? []).map((link) => link.product_id))];
+  if (!productIds.length) return [];
+
   const { data, error } = await supabase
     .from("products")
-    .select("*, product_categories(categories(id,name,active)), product_occasions!inner(occasion_id, occasions(id,name,active)), product_profiles(profiles(id,name,active))")
+    .select(productSelect)
+    .in("id", productIds)
     .eq("active", true)
-    .eq("product_occasions.occasion_id", occasionId)
     .order("created_at", { ascending: false });
-  if (error) {
-    console.error("[quick-suggestions] Falha na consulta de produtos por ocasião", { occasionId, error });
-    throw error;
-  }
+
+  if (error) throw error;
   return (data ?? []).map((row) => adaptProduct(row as unknown as ProductWithLinks));
 }
 

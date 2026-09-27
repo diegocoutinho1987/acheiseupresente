@@ -99,7 +99,7 @@ function productSearchText(product: Product): string {
 
 const GENDER_TERMS = {
   male: ["homem", "masculino", "pai", "namorado", "esposo", "marido"] as const,
-  female: ["mulher", "feminino", "pai", "mae", "namorada", "esposa", "amiga"] as const,
+  female: ["mulher", "feminino", "mae", "namorada", "esposa", "amiga"] as const,
 };
 
 function matchesGender(product: Product, gender: "male" | "female"): boolean {

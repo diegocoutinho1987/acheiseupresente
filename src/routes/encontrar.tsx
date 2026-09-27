@@ -43,8 +43,6 @@ function FinderPage() {
   const { profile, update, step, setStep, phase } = flow;
   const [taxonomiesReady, setTaxonomiesReady] = useState(false);
 
-  if (search.quick) return <QuickFinderPage flow={quickFlow} />;
-
   useEffect(() => {
     if (search.quick) {
       void quickFlow.start();
@@ -53,6 +51,8 @@ function FinderPage() {
     track("generator_started");
     Promise.all([getActiveTaxonomyOptions("profiles"), getActiveTaxonomyOptions("occasions")]).then(([profiles, occasions]) => { update({ taxonomyOptions: { profiles, occasions } }); setTaxonomiesReady(true); }).catch(() => setTaxonomiesReady(true));
   }, [quickFlow.start, search.quick, update]);
+
+  if (search.quick) return <QuickFinderPage flow={quickFlow} />;
 
   const choose = (key: "recipient" | "occasion" | "budget", value: string, event: AnalyticsEvent) => {
     update({ [key]: value });

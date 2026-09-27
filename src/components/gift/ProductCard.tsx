@@ -9,6 +9,22 @@ function shortenText(value: string, max = 130): string {
   return text.length <= max ? text : `${text.slice(0, max - 3).trimEnd()}...`;
 }
 
+function shortenProductTitle(value: string, max = 35): string {
+  const text = value.trim();
+  if (text.length <= max) return text;
+
+  const words = text.split(/\s+/);
+  let result = "";
+
+  for (const word of words) {
+    const candidate = result ? `${result} ${word}` : word;
+    if (candidate.length > max) break;
+    result = candidate;
+  }
+
+  return result || text.slice(0, max).trimEnd();
+}
+
 function priceBand(price: number): string {
   if (price <= 50) return "Até 50 Reais";
   if (price <= 100) return "Até 100 Reais";
@@ -26,7 +42,7 @@ export function ProductCard({ rec, index, onClick }: { rec: Recommendation; inde
         <span className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur">{product.category}</span>
       </ProductImageFrame>
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="mt-1 text-lg leading-snug text-foreground">{product.name}</h3>
+        <h3 className="mt-1 text-lg leading-snug text-foreground">{shortenProductTitle(product.name)}</h3>
         <p className="mt-1 text-sm font-medium text-muted-foreground">{priceBand(product.price)}</p>
         <p className="mt-2 text-sm text-muted-foreground">{shortenText(product.description)}</p>
         <div className="mt-4 rounded-xl bg-secondary p-3.5">

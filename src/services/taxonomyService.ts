@@ -15,6 +15,8 @@ const relationConfig = {
   profiles: { table: "product_profiles", foreignKey: "profile_id" },
 } as const;
 
+export type TaxonomyBulkDeleteResult = { deleted: TaxonomyItem[]; blocked: TaxonomyItem[] };
+
 export class TaxonomyInUseError extends Error {
   constructor(public readonly count: number) {
     super(`Taxonomy item is used by ${count} products`);
@@ -78,4 +80,28 @@ export async function deleteTaxonomyItem(kind: TaxonomyKind, item: TaxonomyItem)
   if (item.productCount > 0) throw new TaxonomyInUseError(item.productCount);
   const { error } = await supabase.from(kind).delete().eq("id", item.id);
   if (error) throw error;
+}
+
+export async function deleteTaxonomyItems(kind: TaxonomyKind, ids: string[]): Promise<TaxonomyBulkDeleteResult> {
+  if (!ids.length) return { deleted: [], blocked: [] };
+  const config = relationConfig[kind];
+  const { data: links, error: linksError } = await supabase.from(config.table).select(`${config.foreignKey},product_id`).in(config.foreignKey, ids);
+  if (linksError) throw linksError;
+  const uniqueProducts = new Map<string, Set<string>>();
+  for (const link of links ?? []) {
+    const row = link as unknown as Record<string, string>;
+    const id = String(row[config.foreignKey]);
+    const productId = String(row.product_id);
+    if (!uniqueProducts.has(id)) uniqueProducts.set(id, new Set());
+    uniqueProducts.get(id)?.add(productId);
+  }
+  const selectedItems = (await getTaxonomyItems(kind)).filter((item) => ids.includes(item.id));
+  const blocked = selectedItems.filter((item) => (uniqueProducts.get(item.id)?.size ?? 0) > 0).map((item) => ({ ...item, productCount: uniqueProducts.get(item.id)?.size ?? item.productCount }));
+  const blockedIds = new Set(blocked.map((item) => item.id));
+  const deletable = selectedItems.filter((item) => !blockedIds.has(item.id));
+  if (deletable.length) {
+    const { error: deleteError } = await supabase.from(kind).delete().in("id", deletable.map((item) => item.id));
+    if (deleteError) throw deleteError;
+  }
+  return { deleted: deletable, blocked };
 }

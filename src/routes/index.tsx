@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, Wallet, Store, Sparkle } from "lucide-react";
 import { SiteHeader } from "@/components/gift/SiteHeader";
+import { SiteFooter } from "@/components/gift/SiteFooter";
 import { ProductImageFrame } from "@/components/gift/ProductImageFrame";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types";
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Achei Seu Presente! — descubra o presente certo para cada pessoa" },
-      { name: "description", content: "Conte um pouco sobre a pessoa e descubra presentes que combinam com ela. 5 ideias personalizadas, dentro do seu orçamento." },
+      { name: "description", content: "Conte um pouco sobre a pessoa e descubra 3 ideias de presente personalizadas, dentro do seu orçamento." },
       { property: "og:title", content: "Achei Seu Presente! — descubra o presente certo para cada pessoa" },
       { property: "og:description", content: "Conte um pouco sobre a pessoa e descubra presentes que combinam com ela." },
       { property: "og:type", content: "website" },
@@ -112,7 +113,7 @@ function Home() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-8 text-center text-xs text-muted-foreground">Achei Seu Presente! · versão de demonstração com produtos fictícios</footer>
+      <SiteFooter />
     </div>
   );
 }

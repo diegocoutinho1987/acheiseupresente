@@ -1,7 +1,9 @@
-import type { Product, Recommendation } from "@/types";
+import type { GiftProfile, Product, Recommendation } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { personalizeRecommendationExplanations } from "@/services/giftAi.functions";
 import type { QuickSuggestion } from "@/data/quickSuggestions";
+import { rankProducts } from "@/services/recommendationEngine";
+import { getRecommendationSessionId } from "@/services/analytics";
 
 const QUICK_TIMEOUT_MS = 10_000;
 const QUICK_LIMIT = 6;
@@ -132,34 +134,6 @@ function matchesGender(product: Product, gender: "male" | "female"): boolean {
   return GENDER_TERMS[gender].some((term) => text.split(/\\s+/).includes(term));
 }
 
-function selectResults(products: Product[], excludeIds: Set<string>): Product[] {
-  const unique = products.filter(
-    (product, index, all) =>
-      !excludeIds.has(product.id) &&
-      all.findIndex((candidate) => candidate.id === product.id) === index,
-  );
-
-  const selected: Product[] = [];
-  const usedCategories = new Set<string>();
-
-  for (const product of unique) {
-    if (selected.length >= QUICK_LIMIT) break;
-
-    const category = normalize(product.category);
-    if (category && !usedCategories.has(category)) {
-      selected.push(product);
-      usedCategories.add(category);
-    }
-  }
-
-  for (const product of unique) {
-    if (selected.length >= QUICK_LIMIT) break;
-    if (!selected.some((item) => item.id === product.id)) selected.push(product);
-  }
-
-  return selected;
-}
-
 function toRecommendation(product: Product, explanation: string): Recommendation {
   return {
     product,
@@ -169,6 +143,29 @@ function toRecommendation(product: Product, explanation: string): Recommendation
   };
 }
 
+function buildQuickProfile(context: QuickSuggestionContext, taxonomyId: { profileId: string | null; occasionId: string | null }): GiftProfile {
+  const terms = context.type === "profile"
+    ? [context.profileName]
+    : context.type === "occasion"
+      ? [context.occasionName]
+      : [context.gender === "male" ? "homem" : "mulher"];
+
+  return {
+    recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
+    recipientText: "",
+    recipientId: taxonomyId.profileId,
+    occasion: context.type === "occasion" ? context.occasionName : "",
+    occasionText: "",
+    occasionId: taxonomyId.occasionId,
+    budget: "Qualquer valor",
+    description: context.label,
+    avoid: "",
+    refinement: "",
+    feedback: [],
+    structuredProfile: { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] },
+    quickContext: { key: context.key, label: context.label, terms },
+  };
+}
 export function createQuickSuggestionContext(
   suggestion: QuickSuggestion,
 ): QuickSuggestionContext {
@@ -380,39 +377,42 @@ export async function getQuickSuggestions(
     }
   }
 
-  const selected = selectResultsWithLog(products, context.excludeIds);
-  const recommendations = selected.map((product) => toRecommendation(product, context.explanation));
+  const sessionId = getRecommendationSessionId();
+  const taxonomyId = {
+    profileId: context.type === "profile" ? null : null,
+    occasionId: context.type === "occasion" ? null : null,
+  };
+
+  if (context.type === "profile") {
+    const resolved = await resolveProfile(context.profileName);
+    taxonomyId.profileId = resolved.id;
+  } else if (context.type === "occasion") {
+    const resolved = await resolveOccasion(context.occasionName);
+    taxonomyId.occasionId = resolved.id;
+  }
+
+  const profileContext = buildQuickProfile(context, taxonomyId);
+  const recommendations = rankProducts(products, profileContext, context.excludeIds ?? [], QUICK_LIMIT, sessionId);
+
+  if (import.meta.env.DEV) {
+    console.info("[QUICK] pool/selection", {
+      eligibleProducts: products.length,
+      selectedProducts: recommendations.map((item) => item.product.id),
+      scores: recommendations.map((item) => ({ id: item.product.id, score: item.score })),
+      categories: recommendations.map((item) => item.product.category),
+      sessionId,
+    });
+  }
 
   try {
-    const profileContext = {
-      recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
-      recipientText: "",
-      recipientId: null,
-      occasion: context.type === "occasion" ? context.occasionName : "",
-      occasionText: "",
-      occasionId: null,
-      budget: "Qualquer valor",
-      description: context.label,
-      avoid: "",
-      refinement: "",
-      feedback: [],
-      structuredProfile: { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] },
-      quickContext: { key: context.key, label: context.label, terms: [] },
-    } as const;
-
-    try {
-      const explanations = await withTimeout(
-        personalizeRecommendationExplanations({ data: { profile: profileContext, recommendations } }),
-        "gerar_explicacoes",
-      );
-      return recommendations.map((item) => ({
-        ...item,
-        explanation: explanations[item.product.id]?.trim() || item.explanation,
-      }));
-    } catch (error) {
-      logError("gerar_explicacoes", error);
-      return recommendations;
-    }
+    const explanations = await withTimeout(
+      personalizeRecommendationExplanations({ data: { profile: profileContext, recommendations } }),
+      "gerar_explicacoes",
+    );
+    return recommendations.map((item) => ({
+      ...item,
+      explanation: explanations[item.product.id]?.trim() || item.explanation,
+    }));
   } catch (error) {
     logError("gerar_explicacoes", error);
     return recommendations;

@@ -349,6 +349,7 @@ export async function getQuickSuggestions(
       context.excludeIds ?? [],
       QUICK_LIMIT,
       sessionId,
+      true,
     );
 
     if (import.meta.env.DEV) {

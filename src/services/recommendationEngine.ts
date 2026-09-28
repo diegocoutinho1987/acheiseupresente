@@ -242,7 +242,7 @@ function similarityPenalty(product: Product, selected: ScoredProduct): number {
   return Math.min(24, sharedCategories * 12 + Math.min(sharedTags, 3) * 3 + Math.min(sharedWords, 4));
 }
 
-function diversify(items: ScoredProduct[], stronger: boolean, limit: number, seed: string): ScoredProduct[] {
+function diversify(items: ScoredProduct[], stronger: boolean, limit: number, seed: string, quickMode = false): ScoredProduct[] {
   if (items.length <= limit) return [...items].sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"));
 
   const ranked = [...items].sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"));
@@ -254,7 +254,7 @@ function diversify(items: ScoredProduct[], stronger: boolean, limit: number, see
 
   const selected: ScoredProduct[] = [];
   const categoryCounts = new Map<string, number>();
-  const similarityStrength = stronger ? 1.25 : 1;
+  const similarityStrength = stronger ? 1.25 : quickMode ? 1.1 : 1;
 
   while (candidates.length && selected.length < limit) {
     let bestIndex = 0;
@@ -296,6 +296,7 @@ export function rankProducts(
   previousIds: string[] = [],
   limit = 3,
   sessionId: string | null = null,
+  quickMode = false,
 ): Recommendation[] {
   const profile = toUserGiftProfile(giftProfile);
   const previous = new Set(previousIds);
@@ -326,7 +327,7 @@ export function rankProducts(
     ...profile.quickTerms,
   ].join("|");
 
-  return diversify(candidates, strongerDiversity, limit, contextSeed).map((item) => ({
+  return diversify(candidates, strongerDiversity, limit, contextSeed, quickMode).map((item) => ({
     product: item.product,
     score: item.score,
     reasons: item.reasons,

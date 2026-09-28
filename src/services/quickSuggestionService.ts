@@ -42,15 +42,15 @@ export class QuickSuggestionUserError extends Error {
 }
 
 function logStart(stage: string) {
-  console.info(`[QUICK] START ${stage}`);
+  if (import.meta.env.DEV) console.info(`[QUICK] START ${stage}`);
 }
 
 function logSuccess(stage: string) {
-  console.info(`[QUICK] SUCCESS ${stage}`);
+  if (import.meta.env.DEV) console.info(`[QUICK] SUCCESS ${stage}`);
 }
 
 function logError(stage: string, error: unknown) {
-  console.error(`[QUICK] ERROR ${stage}`, error);
+  if (import.meta.env.DEV) console.error(`[QUICK] ERROR ${stage}`, error);
 }
 
 async function withTimeout<T>(
@@ -108,64 +108,6 @@ function toProduct(row: {
   };
 }
 
-function normalize(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-const GENDER_TERMS = {
-  male: ["homem", "masculino", "pai", "namorado", "esposo", "marido"],
-  female: ["mulher", "feminino", "mae", "namorada", "esposa", "amiga"],
-} as const;
-
-function matchesGender(product: Product, gender: "male" | "female"): boolean {
-  const text = normalize([
-    product.name,
-    product.description,
-    product.category,
-    ...product.tags,
-    ...product.profiles,
-    ...product.occasions,
-  ].join(" "));
-
-  return GENDER_TERMS[gender].some((term) => text.split(/\\s+/).includes(term));
-}
-
-function toRecommendation(product: Product, explanation: string): Recommendation {
-  return {
-    product,
-    reasons: [],
-    explanation,
-    score: 0,
-  };
-}
-
-function buildQuickProfile(context: QuickSuggestionContext, taxonomyId: { profileId: string | null; occasionId: string | null }): GiftProfile {
-  const terms = context.type === "profile"
-    ? [context.profileName]
-    : context.type === "occasion"
-      ? [context.occasionName]
-      : [context.gender === "male" ? "homem" : "mulher"];
-
-  return {
-    recipient: context.type === "profile" ? context.profileName : context.type === "generic" ? context.label : "",
-    recipientText: "",
-    recipientId: taxonomyId.profileId,
-    occasion: context.type === "occasion" ? context.occasionName : "",
-    occasionText: "",
-    occasionId: taxonomyId.occasionId,
-    budget: "Qualquer valor",
-    description: context.label,
-    avoid: "",
-    refinement: "",
-    feedback: [],
-    structuredProfile: { interests: [], traits: [], lifestyle: [], giftPreferences: [], avoid: [] },
-    quickContext: { key: context.key, label: context.label, terms },
-  };
-}
 export function createQuickSuggestionContext(
   suggestion: QuickSuggestion,
 ): QuickSuggestionContext {
@@ -293,25 +235,29 @@ async function getRelations(
   }
 }
 
-async function getProducts(productIds: string[]): Promise<Product[]> {
+async function getProducts(productIds?: string[]): Promise<Product[]> {
   const stage = "get_products";
   logStart(stage);
 
   try {
-    if (productIds.length === 0) {
+    const query = supabase
+      .from("products")
+      .select("*")
+      .eq("active", true)
+      .order("created_at", { ascending: false });
+
+    const scopedQuery = productIds
+      ? productIds.length
+        ? query.in("id", productIds)
+        : null
+      : query;
+
+    if (!scopedQuery) {
       logSuccess(stage);
       return [];
     }
 
-    const { data, error } = await withTimeout(
-      supabase
-        .from("products")
-        .select("*")
-        .in("id", productIds)
-        .eq("active", true)
-        .order("created_at", { ascending: false }),
-      stage,
-    );
+    const { data, error } = await withTimeout(scopedQuery, stage);
 
     if (error) throw error;
 
@@ -324,18 +270,47 @@ async function getProducts(productIds: string[]): Promise<Product[]> {
   }
 }
 
-function selectResultsWithLog(products: Product[], excludeIds: string[] = []): Product[] {
-  const stage = "select_results";
-  logStart(stage);
+function buildQuickProfile(
+  context: QuickSuggestionContext,
+  taxonomy: { profileId: string | null; occasionId: string | null },
+): GiftProfile {
+  const terms =
+    context.type === "profile"
+      ? [context.profileName]
+      : context.type === "occasion"
+        ? [context.occasionName]
+        : [context.gender === "male" ? "homem" : "mulher"];
 
-  try {
-    const selected = selectResults(products, new Set(excludeIds));
-    logSuccess(stage);
-    return selected;
-  } catch (error) {
-    logError(stage, error);
-    throw error;
-  }
+  return {
+    recipient:
+      context.type === "profile"
+        ? context.profileName
+        : context.type === "generic"
+          ? context.label
+          : "",
+    recipientText: "",
+    recipientId: taxonomy.profileId,
+    occasion: context.type === "occasion" ? context.occasionName : "",
+    occasionText: "",
+    occasionId: taxonomy.occasionId,
+    budget: "Qualquer valor",
+    description: context.label,
+    avoid: "",
+    refinement: "",
+    feedback: [],
+    structuredProfile: {
+      interests: [],
+      traits: [],
+      lifestyle: [],
+      giftPreferences: [],
+      avoid: [],
+    },
+    quickContext: {
+      key: context.key,
+      label: context.label,
+      terms,
+    },
+  };
 }
 
 export async function getQuickSuggestions(
@@ -346,75 +321,66 @@ export async function getQuickSuggestions(
   }
 
   let products: Product[];
+  let profileId: string | null = null;
+  let occasionId: string | null = null;
 
   if (context.type === "profile") {
     const profile = await resolveProfile(context.profileName);
+    profileId = profile.id;
     const productIds = await getRelations("profile", profile.id);
     products = await getProducts(productIds);
   } else if (context.type === "occasion") {
     const occasion = await resolveOccasion(context.occasionName);
+    occasionId = occasion.id;
     const productIds = await getRelations("occasion", occasion.id);
     products = await getProducts(productIds);
   } else {
-    const stage = "get_products";
-    logStart(stage);
-
-    try {
-      const { data, error } = await withTimeout(
-        supabase.from("products").select("*").eq("active", true).order("created_at", { ascending: false }),
-        stage,
-      );
-
-      if (error) throw error;
-
-      const mappedProducts = (data ?? []).map(toProduct);
-      const genderProducts = mappedProducts.filter((product) => matchesGender(product, context.gender));
-      products = genderProducts.length ? [...genderProducts, ...mappedProducts] : mappedProducts;
-      logSuccess(stage);
-    } catch (error) {
-      logError(stage, error);
-      throw error;
-    }
+    products = await getProducts();
   }
 
   const sessionId = getRecommendationSessionId();
-  const taxonomyId = {
-    profileId: context.type === "profile" ? null : null,
-    occasionId: context.type === "occasion" ? null : null,
-  };
+  const profileContext = buildQuickProfile(context, { profileId, occasionId });
 
-  if (context.type === "profile") {
-    const resolved = await resolveProfile(context.profileName);
-    taxonomyId.profileId = resolved.id;
-  } else if (context.type === "occasion") {
-    const resolved = await resolveOccasion(context.occasionName);
-    taxonomyId.occasionId = resolved.id;
-  }
-
-  const profileContext = buildQuickProfile(context, taxonomyId);
-  const recommendations = rankProducts(products, profileContext, context.excludeIds ?? [], QUICK_LIMIT, sessionId);
-
-  if (import.meta.env.DEV) {
-    console.info("[QUICK] pool/selection", {
-      eligibleProducts: products.length,
-      selectedProducts: recommendations.map((item) => item.product.id),
-      scores: recommendations.map((item) => ({ id: item.product.id, score: item.score })),
-      categories: recommendations.map((item) => item.product.category),
-      sessionId,
-    });
-  }
-
+  logStart("select_results");
   try {
-    const explanations = await withTimeout(
-      personalizeRecommendationExplanations({ data: { profile: profileContext, recommendations } }),
-      "gerar_explicacoes",
+    const recommendations = rankProducts(
+      products,
+      profileContext,
+      context.excludeIds ?? [],
+      QUICK_LIMIT,
+      sessionId,
     );
-    return recommendations.map((item) => ({
-      ...item,
-      explanation: explanations[item.product.id]?.trim() || item.explanation,
-    }));
+
+    if (import.meta.env.DEV) {
+      console.info("[QUICK] pool/selection", {
+        eligibleProducts: products.length,
+        selectedProducts: recommendations.map((item) => item.product.id),
+        scores: recommendations.map((item) => ({ id: item.product.id, score: item.score })),
+        categories: recommendations.map((item) => item.product.category),
+        sessionId,
+      });
+    }
+
+    logSuccess("select_results");
+
+    try {
+      const explanations = await withTimeout(
+        personalizeRecommendationExplanations({
+          data: { profile: profileContext, recommendations },
+        }),
+        "gerar_explicacoes",
+      );
+
+      return recommendations.map((item) => ({
+        ...item,
+        explanation: explanations[item.product.id]?.trim() || item.explanation,
+      }));
+    } catch (error) {
+      logError("gerar_explicacoes", error);
+      return recommendations;
+    }
   } catch (error) {
-    logError("gerar_explicacoes", error);
-    return recommendations;
+    logError("select_results", error);
+    throw error;
   }
 }
